@@ -1,0 +1,2729 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RegisCar</title>
+<style>
+  :root{
+    --bg: #F5F1E6;
+    --panel: #FFFFFF;
+    --panel-raised: #F0EAD6;
+    --line: #E4DFD0;
+    --yellow: #F2B705;
+    --yellow-dim: #C99A08;
+    --teal: #3FB6A8;
+    --text: #2B2B26;
+    --text-dim: #8A8271;
+    --green: #4CAF7D;
+    --red: #E0645A;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app{
+    max-width:420px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:0 18px 24px;
+  }
+  body.screen-stats #app{ max-width:1100px; }
+
+  /* TEMA CLARO NA TELA DE ENTRADA (menu) */
+  body.light-menu{ background:#F5F1E6; }
+  body.light-menu .brand{ color:#B8860B; }
+  body.light-menu h1{ color:#2B2B26; }
+  body.light-menu .gear-btn{ background:#fff; border-color:#E4DFD0; color:#2B2B26; box-shadow:0 4px 10px -6px rgba(0,0,0,0.15); }
+
+  /* HEADER */
+  header{
+    padding:26px 2px 16px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+  }
+  .brand-line{ display:flex; align-items:center; gap:8px; }
+  .brand-dash{ width:22px; height:3px; background:var(--yellow); border-radius:2px; }
+  .brand{ font-size:13px; letter-spacing:0.08em; color:#B8860B; font-weight:700; text-transform:uppercase; }
+  h1{ font-size:23px; margin:9px 0 2px; font-weight:700; letter-spacing:-0.01em; text-transform:capitalize; line-height:1.25; }
+  .gear-btn{
+    width:38px; height:38px; border-radius:10px;
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0; margin-top:4px;
+  }
+
+  /* HOME */
+  #home{ display:flex; flex-direction:column; flex:1; }
+  .stage{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:12px; padding:16px 0 8px; }
+
+  .day-bar{
+    display:flex; align-items:center; gap:12px;
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:14px 16px; cursor:pointer;
+  }
+  .day-bar:active{ transform:scale(0.98); }
+  .day-bar-icon{
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    background:linear-gradient(155deg, #7C8CE0 0%, #5566C4 100%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .day-bar-text{ flex:1; min-width:0; }
+  .day-bar-label{ font-size:11px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; color:var(--text-dim); }
+  .day-bar-value{ font-size:14px; font-weight:600; color:var(--text); margin-top:2px; }
+  .day-bar-value b{ color:var(--yellow); }
+  .day-bar-chevron{ color:var(--text-dim); font-size:20px; flex-shrink:0; }
+
+  .hero-btn{
+    width:100%; min-height:150px; border-radius:24px; border:none;
+    font-family:inherit; font-weight:700; font-size:20px; letter-spacing:-0.01em;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+    cursor:pointer; transition:transform .12s ease;
+    background:linear-gradient(155deg, var(--yellow) 0%, var(--yellow-dim) 100%);
+    color:#181300;
+    box-shadow:0 14px 30px -10px rgba(242,183,5,0.4);
+  }
+  .hero-btn:active{ transform:scale(0.97); }
+  .hero-btn svg{ width:44px; height:44px; }
+
+  .secondary-btn{
+    width:100%; padding:16px; border-radius:18px; border:none;
+    font-family:inherit; font-weight:700; font-size:15.5px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer; transition:transform .12s ease;
+    background:linear-gradient(155deg, var(--teal) 0%, #2C8B80 100%);
+    color:#082622;
+    box-shadow:0 10px 22px -10px rgba(63,182,168,0.35);
+  }
+  .secondary-btn:active{ transform:scale(0.97); }
+  .secondary-btn svg{ width:22px; height:22px; }
+
+  /* MENU PRINCIPAL (fundo claro) */
+  #menu{ display:flex; flex-direction:column; flex:1; }
+  .entry-grid{
+    flex:1; display:grid; grid-template-columns:1fr 1fr; gap:11px;
+    align-content:center; padding:8px 0 16px;
+  }
+  .entry-btn{
+    aspect-ratio:1.45; border-radius:20px; border:none; position:relative;
+    background:#FFFFFF; color:#2B2B26; border:1px solid #E4DFD0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    font-family:inherit; font-weight:700; font-size:13.5px;
+    cursor:pointer; transition:transform .12s ease;
+    box-shadow:0 14px 28px -14px rgba(0,0,0,0.35);
+  }
+  .entry-btn:active{ transform:scale(0.96); }
+  .entry-btn .icon-badge{
+    width:42px; height:42px; border-radius:13px; background:#FBF0CE;
+    display:flex; align-items:center; justify-content:center; color:#B8860B;
+  }
+  .entry-btn svg{ width:24px; height:24px; }
+  .entry-btn span{ font-weight:800; letter-spacing:0.01em; }
+  .entry-badge{
+    position:absolute; top:12px; right:12px;
+    background:var(--yellow); color:#181300; font-size:11px; font-weight:800;
+    min-width:20px; height:20px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    padding:0 6px;
+  }
+
+  /* DUO BUTTONS (tela Corridas) */
+  .duo-row{ display:flex; gap:12px; }
+  .duo-btn{
+    flex:1; aspect-ratio:1; border-radius:22px; border:none; position:relative;
+    font-family:inherit; font-weight:700; font-size:16px; letter-spacing:-0.01em;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    cursor:pointer; transition:transform .12s ease;
+  }
+  .duo-btn:active{ transform:scale(0.96); }
+  .duo-btn svg{ width:32px; height:32px; }
+  .duo-corrida{
+    background:linear-gradient(155deg, var(--yellow) 0%, var(--yellow-dim) 100%);
+    color:#181300; box-shadow:0 12px 26px -10px rgba(242,183,5,0.4);
+  }
+  .duo-despesa{
+    background:linear-gradient(155deg, var(--teal) 0%, #2C8B80 100%);
+    color:#082622; box-shadow:0 12px 26px -10px rgba(63,182,168,0.35);
+  }
+  .duo-combustivel{
+    background:linear-gradient(155deg, #E0654F 0%, #B8452F 100%);
+    color:#fff; box-shadow:0 12px 26px -10px rgba(224,101,79,0.4);
+  }
+  .duo-combustivel svg{ stroke: #fff; }
+  .duo-corrida.locked{
+    background:var(--panel-raised); color:var(--text-dim); box-shadow:none; border:1.5px dashed var(--line);
+  }
+  .duo-corrida.locked svg{ opacity:0.5; }
+  .hero-btn.locked{
+    background:var(--panel-raised); color:var(--text-dim); box-shadow:none; border:1.5px dashed var(--line);
+  }
+  .hero-btn.locked svg{ opacity:0.5; }
+  .lock-badge{
+    position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%;
+    background:var(--bg); display:flex; align-items:center; justify-content:center;
+  }
+
+  .km-inherited-box{
+    background:var(--panel-raised); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;
+  }
+  .km-inherited-box .lbl{ font-size:12px; color:var(--text-dim); }
+  .km-inherited-box .val{ font-size:15px; font-weight:700; color:var(--text); }
+  .km-inherited-box .edit-link{ font-size:12px; color:var(--yellow); font-weight:700; cursor:pointer; }
+
+  /* FOLHA DE CADERNO */
+  .notebook-wrap{ margin-top:16px; }
+  .date-nav{
+    display:flex; align-items:center; gap:10px; margin-top:16px;
+  }
+  .date-nav-arrow{
+    width:38px; height:38px; border-radius:10px; flex-shrink:0;
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .date-nav-label{
+    flex:1; position:relative; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; color:var(--text); font-weight:700; font-size:14.5px; cursor:pointer;
+  }
+  .date-nav-label input[type="date"]{
+    position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer;
+  }
+  .notebook-sheet{
+    background:#F7F1DE;
+    border-radius:10px;
+    padding:18px 16px 18px 20px;
+    position:relative;
+    background-image: repeating-linear-gradient(
+      to bottom, transparent 0, transparent 27px, rgba(90,80,60,0.18) 28px
+    );
+    background-position: 0 6px;
+    box-shadow:0 10px 26px -12px rgba(0,0,0,0.5);
+  }
+  .notebook-sheet::before{
+    content:''; position:absolute; left:34px; top:0; bottom:0; width:1px; background:rgba(196,72,72,0.35);
+  }
+  .notebook-date{
+    color:#8a6b1f; font-weight:800; font-size:13px; letter-spacing:0.03em; text-transform:uppercase;
+    margin-bottom:10px; padding-left:14px;
+  }
+  .notebook-section-title{
+    color:#5a4a2a; font-weight:800; font-size:12.5px; margin:14px 0 4px 14px; text-transform:uppercase; letter-spacing:0.03em;
+  }
+  .notebook-row{
+    display:flex; justify-content:space-between; gap:8px;
+    color:#3a3020; font-size:13px; line-height:27px; padding-left:14px; white-space:nowrap; overflow:hidden;
+  }
+  .notebook-row .nb-main{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .notebook-row .nb-val{ font-weight:700; flex-shrink:0; }
+  .notebook-row-clickable{ cursor:pointer; border-radius:6px; transition:background .12s ease; }
+  .notebook-row-clickable:active{ background:rgba(90,80,60,0.15); }
+  .notebook-empty{ color:#8a7d5f; font-size:13px; padding-left:14px; font-style:italic; }
+  .notebook-total{
+    display:flex; justify-content:space-between; padding:10px 14px 0;
+    margin-top:6px; border-top:1.5px dashed rgba(90,80,60,0.4);
+    color:#2c2413; font-weight:800; font-size:15px;
+  }
+  .notebook-total .nb-total-val{ color:#8a6b1f; }
+  .export-btn{
+    margin-top:16px; width:100%; padding:15px; border-radius:14px; border:none;
+    background:var(--panel-raised); border:1px solid var(--line); color:var(--text);
+    font-family:inherit; font-size:14.5px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+
+  /* A RECEBER */
+  .receber-item{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:13px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; cursor:pointer;
+  }
+  .receber-item:active{ transform:scale(0.98); }
+  .receber-item-icon{
+    width:36px; height:36px; border-radius:10px; background:var(--panel-raised); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; color:var(--yellow);
+  }
+  .receber-item-info{ flex:1; min-width:0; }
+  .receber-item-name{ font-size:14.5px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .receber-item-meta{ font-size:12px; color:var(--text-dim); margin-top:2px; }
+  .receber-item-val{ font-weight:800; color:var(--yellow); font-size:15px; flex-shrink:0; }
+  .receber-item.pago{ opacity:0.65; cursor:default; }
+  .receber-item.pago .receber-item-val{ color:var(--green); }
+  .receber-item.pago .receber-item-icon{ color:var(--green); }
+  .receber-empty{ color:var(--text-dim); font-size:13px; padding:6px 2px 16px; }
+  .list-section-title{
+    font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+    color:var(--text-dim); margin:18px 0 8px 2px;
+  }
+  .stats-table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid var(--line); border-radius:10px; background:var(--panel); width:100%; }
+  .stats-table{ border-collapse:collapse; font-size:12px; white-space:nowrap; width:100%; }
+  .stats-table th, .stats-table td{ padding:7px 10px; text-align:center; border-bottom:1px solid var(--line); }
+  .stats-table th:first-child, .stats-table td:first-child{ text-align:left; position:sticky; left:0; background:var(--panel); }
+  .stats-table thead th{ font-size:10.5px; color:var(--text-dim); text-transform:uppercase; font-weight:700; border-bottom:2px solid var(--line); }
+  .stats-table tbody tr:last-child td{ border-bottom:none; }
+  .stats-table tbody.diario td{ color:#C0392B; font-weight:600; }
+  .stats-table tbody.mensal td{ color:var(--text); font-weight:700; }
+  .stats-table tbody.mensal tr:nth-child(odd){ background:var(--panel-raised); }
+  .stats-table .hl{ background:#FCEFC7; }
+  .resumo-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+  .resumo-box{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center; }
+  .resumo-box-label{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; }
+  .resumo-box-val{ font-size:17px; font-weight:800; color:var(--text); }
+  .hoje-item{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:11px 13px; background:var(--panel); border:1px solid var(--line); border-radius:12px; margin-bottom:8px;
+  }
+  .hoje-item.clickable{ cursor:pointer; }
+  .hoje-item.clickable:active{ background:var(--panel-raised); }
+  .hoje-item-main{ font-size:13.5px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hoje-item-time{ font-size:11.5px; color:var(--text-dim); margin-right:7px; }
+  .hoje-item-val{ font-weight:700; color:var(--text); flex-shrink:0; font-size:14px; }
+
+  /* TEMAS POR PLATAFORMA (aparecem só depois de escolher) */
+  #corrida-screen.theme-99, #corrida-screen.theme-uber,
+  #corrida-screen.theme-indrive, #corrida-screen.theme-particular{
+    margin:0 -18px; padding:8px 18px 24px; background:var(--bg); color:var(--text); transition: background .2s ease, color .2s ease;
+  }
+  #corrida-screen.theme-99{
+    --bg:#FFFFFF; --panel:#FFF8DE; --panel-raised:#FFF0B3; --line:#F0DE96; --text:#2b2408; --text-dim:#8a7a2e;
+  }
+  #corrida-screen.theme-uber{
+    --bg:#FFFFFF; --panel:#F2F2F2; --panel-raised:#E6E6E6; --line:#D8D8D8; --text:#0a0a0a; --text-dim:#555555;
+  }
+  #corrida-screen.theme-indrive{
+    --bg:#E9F7DD; --panel:#D6EFC0; --panel-raised:#C2E6A5; --line:#9AD473; --text:#12240a; --text-dim:#40602a;
+  }
+  #corrida-screen.theme-particular{
+    --bg:#EAF1FB; --panel:#DCE8F7; --panel-raised:#CBDCF2; --line:#AEC9EA; --text:#132238; --text-dim:#4a5f7a;
+  }
+
+  .today-count{ text-align:center; color:var(--text-dim); font-size:13.5px; margin-top:4px; line-height:1.6; }
+  .today-count b{ color:var(--text); font-weight:700; }
+
+  footer{ padding-top:18px; border-top:1px solid var(--line); margin-top:18px; }
+  .footer-row{ display:flex; gap:10px; }
+  .footer-btn{
+    flex:1; background:var(--panel); border:1px solid var(--line); color:var(--text-dim);
+    font-family:inherit; font-size:13px; font-weight:600; padding:14px 10px; border-radius:12px; text-align:center;
+  }
+  .footer-note{ text-align:center; color:var(--text-dim); font-size:12px; margin-top:10px; opacity:0.7; }
+
+  /* GENERIC SCREEN */
+  .screen{ display:none; flex-direction:column; flex:1; padding-top:8px; }
+  .top-row{ display:flex; align-items:center; gap:12px; padding:18px 0 6px; }
+  .back-btn{
+    width:38px; height:38px; border-radius:10px; background:var(--panel); border:1px solid var(--line);
+    color:var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+  .top-row h2{ font-size:19px; margin:0; font-weight:700; }
+
+  .field{ margin-top:20px; }
+  .field label{
+    display:block; font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
+    color:var(--text-dim); margin-bottom:8px;
+  }
+
+  .valor-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 16px; display:flex; align-items:baseline; gap:8px;
+  }
+  .valor-box .prefix{ font-size:20px; color:var(--text-dim); font-weight:700; }
+  .valor-box input{
+    background:transparent; border:none; outline:none; color:var(--text);
+    font-size:30px; font-weight:700; font-family:inherit; width:100%; padding:0;
+  }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:9px; }
+  .chip{
+    padding:11px 16px; border-radius:999px; border:1px solid var(--line); background:var(--panel);
+    color:var(--text-dim); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer;
+    user-select:none; transition:all .12s ease;
+  }
+  .chip.active{ background:var(--yellow); border-color:var(--yellow); color:#181300; }
+  .chip.pay-active{ background:var(--teal); border-color:var(--teal); color:#082622; }
+
+  /* PLATFORM ICON BUTTONS */
+  .platform-grid{ display:flex; flex-wrap:wrap; gap:9px 6px; justify-content:flex-start; }
+  #pagamento-chips.platform-grid .platform-chip{ flex:0 0 calc(20% - 5px); min-width:60px; }
+  .platform-chip{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:7px;
+    padding:12px 4px 10px; border-radius:18px; border:1.5px solid transparent;
+    background:transparent; cursor:pointer; user-select:none; transition:all .12s ease;
+  }
+  .platform-chip .p-icon{
+    width:46px; height:46px; border-radius:13px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px; box-shadow:0 4px 10px -4px rgba(0,0,0,0.5);
+  }
+  .platform-chip .p-icon.particular{ background:#3A4048; color:#EDEFF2; }
+  .platform-chip .p-icon.uber{ background:#000; color:#fff; }
+  .platform-chip .p-icon.n99{ background:#fff; color:#F2A900; border:1px solid #e7e7e7; }
+  .platform-chip .p-icon.indrive{ background:#B9EC3F; color:#123212; }
+  .platform-chip span.p-label{ font-size:11px; color:var(--text-dim); font-weight:600; }
+  .platform-chip.active{ border-color:var(--line); background:var(--panel-raised); }
+  .platform-chip.active .p-icon{ box-shadow:0 0 0 2px var(--yellow), 0 4px 10px -4px rgba(0,0,0,0.5); }
+  .platform-chip.active span.p-label{ color:var(--text); }
+
+  #plataforma-chips.platform-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #plataforma-chips.platform-grid .platform-chip{ flex:none; padding:18px 4px 16px; }
+  #plataforma-chips .platform-chip .p-icon{ width:64px; height:64px; border-radius:18px; font-size:20px; }
+  #plataforma-chips .platform-chip span.p-label{ font-size:13.5px; }
+
+  /* PAYMENT ICON BUTTONS */
+  .p-icon.dinheiro{ background:#2FAE60; color:#fff; }
+  .p-icon.pix{ background:#32BCAD; color:#fff; }
+  .p-icon.cartao{ background:#2B3A55; color:#fff; }
+  .p-icon.noapp{ background:#5B4A8A; color:#fff; }
+  .p-icon.areceber{ background:#D98A2B; color:#fff; }
+  .platform-chip.pay-active{ border-color:var(--line); background:var(--panel-raised); }
+  .platform-chip.pay-active .p-icon{ box-shadow:0 0 0 2px var(--teal), 0 4px 10px -4px rgba(0,0,0,0.5); }
+  .platform-chip.pay-active span.p-label{ color:var(--text); }
+
+  .bolso-box{
+    display:none;
+    margin-top:14px;
+    background:var(--panel-raised);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .bolso-box .row{ display:flex; justify-content:space-between; font-size:13px; color:var(--text-dim); padding:3px 0; }
+  .bolso-box .row.total{ margin-top:4px; padding-top:10px; border-top:1px solid var(--line); }
+  .bolso-box .row.total span:last-child{ color:var(--green); font-weight:700; font-size:16px; }
+
+  textarea, .text-input{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    color:var(--text); font-family:inherit; font-size:15px; padding:14px; outline:none;
+  }
+  textarea{ min-height:70px; resize:vertical; }
+  textarea::placeholder, .text-input::placeholder{ color:var(--text-dim); }
+  .char-count{ text-align:right; font-size:11px; color:var(--text-dim); margin-top:5px; }
+
+  .row-3{ display:flex; gap:10px; }
+  .row-3 .field{ flex:1; margin-top:0; }
+  .row-3 input{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    color:var(--text); font-family:inherit; font-size:16px; font-weight:600; padding:14px 10px; outline:none;
+    text-align:center;
+  }
+  .row-3 .unit{ text-align:center; font-size:11px; color:var(--text-dim); margin-top:4px; }
+
+  .save-btn{
+    margin-top:28px; width:100%; padding:17px; border-radius:var(--radius); border:none;
+    font-family:inherit; font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .save-btn.yellow{ background:var(--yellow); color:#181300; }
+  .save-btn.teal{ background:var(--teal); color:#082622; }
+  .save-btn:disabled{ background:var(--panel-raised); color:var(--text-dim); }
+  .save-btn:active:not(:disabled){ transform:scale(0.98); }
+  .hint{ font-size:12px; color:var(--text-dim); margin-top:10px; text-align:center; }
+
+  /* TOAST */
+  #toast{
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-raised); border:1px solid var(--line); color:var(--text);
+    padding:13px 20px; border-radius:12px; font-size:14px; font-weight:600;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    display:flex; align-items:center; gap:8px; z-index:50;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast .dot{ width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; }
+</style>
+</head>
+<body class="light-menu">
+<div id="app">
+
+  <header>
+    <div>
+      <div class="brand-line"><div class="brand-dash"></div><div class="brand">RegisCar</div></div>
+      <h1 id="today-date"></h1>
+    </div>
+    <button class="gear-btn" id="gear-btn" aria-label="Parâmetros">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </header>
+
+  <!-- MENU PRINCIPAL -->
+  <div id="menu">
+    <div class="entry-grid">
+      <button class="entry-btn" id="open-corridas-menu-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M5 11l1.6-4.8A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.2L19 11h.5a1.5 1.5 0 0 1 1.5 1.5V16a1 1 0 0 1-1 1h-1a2.5 2.5 0 0 1-5 0H10a2.5 2.5 0 0 1-5 0H4a1 1 0 0 1-1-1v-3.5A1.5 1.5 0 0 1 4.5 11H5zm1.9-.8h10.2L16 6.7H8L6.9 10.2zM7.5 18a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm9 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg></div>
+        <span>Corridas</span>
+      </button>
+      <button class="entry-btn" id="open-km-menu-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13l3-3M12 5V3M4.2 6.2l1.4 1.4M19.8 6.2l-1.4 1.4"/></svg></div>
+        <span>Km</span>
+      </button>
+      <button class="entry-btn" id="open-despesa-menu-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <span>Despesa</span>
+      </button>
+      <button class="entry-btn" id="open-combustivel-menu-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14M3 22h10M14 10h2.5a1.5 1.5 0 0 1 1.5 1.5V19a1.5 1.5 0 0 0 3 0v-6l-3-3M7 6V4h4v2"/></svg></div>
+        <span>Combustível</span>
+      </button>
+      <button class="entry-btn" id="open-receber-btn">
+        <span class="entry-badge" id="receber-badge" style="display:none;">0</span>
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 9V7a2 2 0 0 0-2-2h-1.17A4 4 0 0 0 12 3a4 4 0 0 0-3.83 2H7a5 5 0 0 0-5 5c0 1.86 1 3.44 2.5 4.3V17a1 1 0 0 0 1 1h2v2h3v-2h1v2h3v-2.3A5 5 0 0 0 17 12h1a2 2 0 0 0 2-2z"/><path d="M9 11h.01"/></svg></div>
+        <span>A receber</span>
+      </button>
+      <button class="entry-btn" id="open-reports-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 13h6M9 17h6"/></svg></div>
+        <span>Relatórios</span>
+      </button>
+      <button class="entry-btn" id="open-resumo-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+        <span>Resumo</span>
+      </button>
+      <button class="entry-btn" id="open-stats-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 15l4-5 3 3 5-6"/></svg></div>
+        <span>Fechamento</span>
+      </button>
+      <button class="entry-btn" id="open-fechamento-mensal-btn">
+        <div class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg></div>
+        <span>Fechamento mensal</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESUMO DO DIA -->
+  <div class="screen" id="resumo-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>Resumo</h2>
+    </div>
+    <div class="date-nav">
+      <button class="date-nav-arrow" id="resumo-prev-day" aria-label="Dia anterior">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <label class="date-nav-label" id="resumo-date-label">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <span id="resumo-date-text">Hoje</span>
+        <input type="date" id="resumo-date-input">
+      </label>
+      <button class="date-nav-arrow" id="resumo-next-day" aria-label="Próximo dia">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="stats-table-wrap">
+      <table class="stats-table" id="resumo-matriz">
+        <thead><tr><th>Forma</th><th>Part</th><th>Uber</th><th>99</th><th>InDrive</th><th>Total</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="resumo-grid">
+      <div class="resumo-box"><div class="resumo-box-label">A receber</div><div class="resumo-box-val" id="resumo-a-receber">—</div></div>
+      <div class="resumo-box"><div class="resumo-box-label">Combustível</div><div class="resumo-box-val" id="resumo-comb">—</div></div>
+      <div class="resumo-box"><div class="resumo-box-label">Km rodado</div><div class="resumo-box-val" id="resumo-km">—</div></div>
+      <div class="resumo-box"><div class="resumo-box-label">Despesa</div><div class="resumo-box-val" id="resumo-despesa">—</div></div>
+    </div>
+  </div>
+
+  <!-- CORRIDAS (ambiente do dia) -->
+  <!-- FECHAMENTO DIARIO -->
+  <div class="screen" id="stats-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>Fechamento</h2>
+    </div>
+    <div class="list-section-title">Fechamento diário</div>
+    <div id="stats-diario-list"></div>
+  </div>
+
+  <!-- FECHAMENTO MENSAL -->
+  <div class="screen" id="fechamento-mensal-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>Fechamento mensal</h2>
+    </div>
+    <div id="stats-mensal-list"></div>
+  </div>
+
+  <!-- RELATORIOS (em breve) -->
+  <div class="screen" id="reports-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>Relatórios</h2>
+    </div>
+    <div class="date-nav">
+      <button class="date-nav-arrow" id="report-prev-day" aria-label="Dia anterior">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <label class="date-nav-label" id="report-date-label">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <span id="report-date-text">Hoje</span>
+        <input type="date" id="report-date-input">
+      </label>
+      <button class="date-nav-arrow" id="report-next-day" aria-label="Próximo dia">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="notebook-wrap">
+      <div class="notebook-sheet" id="notebook-sheet"></div>
+    </div>
+  </div>
+
+  <!-- A RECEBER -->
+  <div class="screen" id="receber-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>A receber</h2>
+    </div>
+    <div class="notebook-section-title" style="margin-left:0;">Pendentes</div>
+    <div id="receber-pendentes-list"></div>
+    <div class="notebook-section-title" style="margin-left:0;">Recebidos recentemente</div>
+    <div id="receber-pagos-list"></div>
+  </div>
+
+  <!-- CONFIRMAR RECEBIMENTO -->
+  <div class="screen" id="pagar-recebivel-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="receber" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2 id="pagar-recebivel-title">Confirmar recebimento</h2>
+    </div>
+
+    <div class="field">
+      <label>Forma de pagamento</label>
+      <div class="platform-grid" id="pagamento-recebivel-chips">
+        <div class="chip platform-chip" data-val="Dinheiro">
+          <div class="p-icon dinheiro">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 10v.01M18 14v.01"/></svg>
+          </div>
+          <span class="p-label">Dinheiro</span>
+        </div>
+        <div class="chip platform-chip" data-val="Pix">
+          <div class="p-icon pix">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l-9 9 4 4-9 9M22 8l-9 9-4-4 9-9z"/></svg>
+          </div>
+          <span class="p-label">Pix</span>
+        </div>
+        <div class="chip platform-chip" data-val="Cartão">
+          <div class="p-icon cartao">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
+          </div>
+          <span class="p-label">Cartão</span>
+        </div>
+      </div>
+      <div class="chips" id="tipo-cartao-recebivel-chips" style="display:none; margin-top:9px;">
+        <div class="chip" data-val="Crédito">Crédito</div>
+        <div class="chip" data-val="Débito">Débito</div>
+      </div>
+    </div>
+
+    <button class="save-btn yellow" id="confirmar-recebimento-btn" disabled>Confirmar recebimento</button>
+    <div class="hint">O valor entra na soma de hoje, o dia em que você recebeu de verdade</div>
+  </div>
+
+  <!-- CORRIDA -->
+  <div class="screen" id="corrida-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2 id="corrida-screen-title">Nova corrida</h2>
+    </div>
+    <div class="today-count" id="today-count" style="text-align:left;margin-top:4px;">Carregando dados…</div>
+
+    <div class="field">
+      <label>Plataforma</label>
+      <div class="platform-grid" id="plataforma-chips">
+        <div class="chip platform-chip" data-val="Particular">
+          <div class="p-icon particular">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.5-5.5a2 2 0 0 1 1.93-1.5h5.14a2 2 0 0 1 1.93 1.5L18 17M5 17a2 2 0 1 0 4 0M15 17a2 2 0 1 0 4 0M6 11.5h12"/></svg>
+          </div>
+          <span class="p-label">Part</span>
+        </div>
+        <div class="chip platform-chip" data-val="Uber">
+          <div class="p-icon uber">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </div>
+          <span class="p-label">Uber</span>
+        </div>
+        <div class="chip platform-chip" data-val="99">
+          <div class="p-icon n99">99</div>
+          <span class="p-label">99</span>
+        </div>
+        <div class="chip platform-chip" data-val="InDrive">
+          <div class="p-icon indrive">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l5 5L20 7"/></svg>
+          </div>
+          <span class="p-label">InDrive</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="corrida-fields" style="display:none;">
+      <div class="field">
+        <label for="valor-input">Valor</label>
+        <div class="valor-box">
+          <span class="prefix">R$</span>
+          <input id="valor-input" type="text" inputmode="decimal" value="0,00" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Forma de pagamento</label>
+        <div class="platform-grid" id="pagamento-chips">
+          <div class="chip platform-chip" data-val="Dinheiro">
+            <div class="p-icon dinheiro">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 10v.01M18 14v.01"/></svg>
+            </div>
+            <span class="p-label">Dinheiro</span>
+          </div>
+          <div class="chip platform-chip" data-val="Pix">
+            <div class="p-icon pix">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l-9 9 4 4-9 9M22 8l-9 9-4-4 9-9z"/></svg>
+            </div>
+            <span class="p-label">Pix</span>
+          </div>
+          <div class="chip platform-chip" data-val="Cartão">
+            <div class="p-icon cartao">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
+            </div>
+            <span class="p-label">Cartão</span>
+          </div>
+          <div class="chip platform-chip" data-val="No app" id="chip-no-app" style="display:none;">
+            <div class="p-icon noapp">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>
+            </div>
+            <span class="p-label">No app</span>
+          </div>
+          <div class="chip platform-chip" data-val="A receber">
+            <div class="p-icon areceber">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+            </div>
+            <span class="p-label">A receber</span>
+          </div>
+        </div>
+        <div class="chips" id="tipo-cartao-chips" style="display:none; margin-top:9px;">
+          <div class="chip" data-val="Crédito">Crédito</div>
+          <div class="chip" data-val="Débito">Débito</div>
+        </div>
+        <div class="field" id="nome-passageiro-field" style="display:none; margin-top:14px;">
+          <label for="nome-passageiro-input">Nome do passageiro</label>
+          <input class="text-input" id="nome-passageiro-input" type="text" placeholder="Ex: João (cliente do prédio azul)">
+        </div>
+        <div class="field" id="valor-bolso-manual-field" style="display:none; margin-top:14px;">
+          <label for="valor-bolso-manual-input">Quanto foi pro bolso (o app mostra isso pra você)</label>
+          <div class="valor-box">
+            <span class="prefix">R$</span>
+            <input id="valor-bolso-manual-input" type="text" inputmode="decimal" value="0,00" autocomplete="off">
+          </div>
+          <div class="hint" style="text-align:left;margin-top:8px;">Coloca o valor cheio da corrida ali em cima, e aqui o valor que o próprio app mostrou que foi pro seu bolso — a diferença vira a taxa do app.</div>
+        </div>
+        <div class="bolso-box" id="bolso-box">
+          <div class="row" id="bolso-taxa-row"><span>Taxa do cartão</span><span id="bolso-taxa-val">—</span></div>
+          <div class="row" id="transferir-row" style="display:none;"><span>Taxa do app</span><span id="transferir-val">—</span></div>
+          <div class="row total"><span id="bolso-total-label">Vai pro bolso</span><span id="bolso-final-val">R$ 0,00</span></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="obs-input">Observação</label>
+        <textarea id="obs-input" placeholder="Opcional — nome, referência, o que quiser anotar"></textarea>
+      </div>
+
+      <button class="save-btn yellow" id="save-corrida-btn" disabled>Salvar corrida</button>
+      <div class="hint" id="save-corrida-hint" style="display:none; color:var(--red);"></div>
+      <button class="export-btn" id="delete-corrida-btn" style="display:none; margin-top:10px; color:var(--red); border-color:var(--red);">Excluir corrida</button>
+      <div class="hint">Data e hora são gravadas automaticamente</div>
+
+      <div class="list-section-title" id="corrida-hoje-title" style="display:none; margin-top:24px;">Lançadas hoje</div>
+      <div id="corrida-hoje-list"></div>
+    </div>
+  </div>
+
+  <!-- DESPESA -->
+  <!-- COMBUSTIVEL -->
+  <div class="screen" id="despesa-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2 id="despesa-screen-title">Combustível</h2>
+    </div>
+
+    <div class="field">
+      <label for="despesa-obs-input">Descrição</label>
+      <input class="text-input" id="despesa-obs-input" type="text" maxlength="256" placeholder="Ex: Abastecimento posto Ipiranga">
+      <div class="char-count"><span id="despesa-char-count">0</span>/256</div>
+    </div>
+
+    <div class="field">
+      <div class="row-3">
+        <div class="field">
+          <label for="despesa-km-input">Km</label>
+          <input id="despesa-km-input" type="text" inputmode="decimal" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="despesa-litros-input">Litros</label>
+          <input id="despesa-litros-input" type="text" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div class="field">
+          <label for="despesa-valor-input">Valor</label>
+          <div class="valor-box" style="padding:0 10px;">
+            <span class="prefix" style="font-size:15px;">R$</span>
+            <input id="despesa-valor-input" type="text" inputmode="decimal" value="0,00" autocomplete="off" style="font-size:16px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn teal" id="save-despesa-btn" disabled>Salvar despesa</button>
+    <button class="export-btn" id="delete-despesa-btn" style="display:none; margin-top:10px; color:var(--red); border-color:var(--red);">Excluir despesa</button>
+    <div class="hint">Data e hora são gravadas automaticamente</div>
+
+    <div class="list-section-title" id="combustivel-hoje-title" style="display:none;">Lançados hoje</div>
+    <div id="combustivel-hoje-list"></div>
+  </div>
+
+  <!-- DESPESA GERAL -->
+  <div class="screen" id="despesa-geral-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2 id="despesa-geral-screen-title">Despesa</h2>
+    </div>
+
+    <div class="field">
+      <label for="despesa-geral-favorecido-input">Favorecido</label>
+      <input class="text-input" id="despesa-geral-favorecido-input" type="text" maxlength="256" placeholder="Ex: Mercado, lanche, impressão...">
+    </div>
+
+    <div class="field">
+      <label for="despesa-geral-valor-input">Valor</label>
+      <div class="valor-box">
+        <span class="prefix">R$</span>
+        <input id="despesa-geral-valor-input" type="text" inputmode="decimal" value="0,00" autocomplete="off">
+      </div>
+    </div>
+
+    <button class="save-btn teal" id="save-despesa-geral-btn" disabled>Salvar despesa</button>
+    <button class="export-btn" id="delete-despesa-geral-btn" style="display:none; margin-top:10px; color:var(--red); border-color:var(--red);">Excluir despesa</button>
+    <div class="hint">Data e hora são gravadas automaticamente</div>
+
+    <div class="list-section-title" id="despesa-geral-hoje-title" style="display:none;">Lançadas hoje</div>
+    <div id="despesa-geral-hoje-list"></div>
+  </div>
+
+  <!-- KM DO DIA -->
+  <div class="screen" id="km-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" data-back="menu" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>Quilometragem do dia</h2>
+    </div>
+
+    <div class="field" id="km-inicial-readonly-field">
+      <label>Km inicial</label>
+      <div class="km-inherited-box">
+        <div>
+          <div class="lbl" id="km-inherited-lbl">Herdado do dia anterior</div>
+          <div class="val" id="km-inherited-val">—</div>
+        </div>
+        <div class="edit-link" id="km-inherited-edit">editar</div>
+      </div>
+    </div>
+
+    <div class="field" id="km-inicial-input-field" style="display:none;">
+      <label for="km-inicial-input">Km inicial</label>
+      <input class="text-input" id="km-inicial-input" type="text" inputmode="decimal" placeholder="Ex: 45210">
+    </div>
+
+    <div class="field">
+      <label for="km-final-input">Km final</label>
+      <input class="text-input" id="km-final-input" type="text" inputmode="decimal" placeholder="Ex: 45320">
+    </div>
+
+    <div class="field">
+      <label for="km-desconto-input">Km fora do trabalho (não contar)</label>
+      <input class="text-input" id="km-desconto-input" type="text" inputmode="decimal" placeholder="Ex: 20">
+      <div class="hint" style="text-align:left;margin-top:8px;">Se rodou por fora do trabalho (uso pessoal), coloca aqui quantos km — esses não entram na conta</div>
+    </div>
+
+    <div class="bolso-box" id="km-resultado-box" style="display:none;">
+      <div class="row" id="km-bruto-row"><span>Rodado bruto</span><span id="km-bruto-val">0 km</span></div>
+      <div class="row total"><span>Líquido (trabalho)</span><span id="km-resultado-val">0 km</span></div>
+    </div>
+
+    <button class="save-btn yellow" id="save-km-btn">Salvar quilometragem</button>
+    <div class="hint">O km inicial de hoje já vem do km final que você registrou ontem — só precisa preencher o final quando fechar o dia</div>
+  </div>
+
+  <!-- PARAMETROS -->
+  <div class="screen" id="params-screen">
+    <div class="top-row">
+      <button class="back-btn back-to-home" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2>Parâmetros</h2>
+    </div>
+
+    <div class="field">
+      <label for="taxa-credito-input">Taxa do cartão de crédito (%)</label>
+      <div class="valor-box">
+        <input id="taxa-credito-input" type="text" inputmode="decimal" value="0" autocomplete="off">
+        <span class="prefix">%</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="taxa-debito-input">Taxa do cartão de débito (%)</label>
+      <div class="valor-box">
+        <input id="taxa-debito-input" type="text" inputmode="decimal" value="0" autocomplete="off">
+        <span class="prefix">%</span>
+      </div>
+      <div class="hint" style="text-align:left;margin-top:8px;">Aplicadas automaticamente quando você marca "Cartão" e escolhe Crédito ou Débito, pra calcular quanto vai pro bolso.</div>
+    </div>
+
+    <button class="save-btn yellow" id="save-params-btn">Salvar parâmetros</button>
+  </div>
+
+</div>
+
+<div id="toast"><span class="dot"></span><span id="toast-text"></span></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCRy5Gbs-vgdREmHKHnkhZcJrh9fSXEhJ4",
+  authDomain: "regis-car-2a5e4.firebaseapp.com",
+  projectId: "regis-car-2a5e4",
+  storageBucket: "regis-car-2a5e4.firebasestorage.app",
+  messagingSenderId: "999785655653",
+  appId: "1:999785655653:web:78e5b85fdfeea22241c58c"
+};
+let fsDocRef = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  fsDocRef = firebase.firestore().collection('regiscar').doc('dados');
+}catch(e){}
+
+(function(){
+  const screens = {
+    menu: document.getElementById('menu'),
+    corrida: document.getElementById('corrida-screen'),
+    despesa: document.getElementById('despesa-screen'),
+    despesaGeral: document.getElementById('despesa-geral-screen'),
+    km: document.getElementById('km-screen'),
+    params: document.getElementById('params-screen'),
+    stats: document.getElementById('stats-screen'),
+    fechamentoMensal: document.getElementById('fechamento-mensal-screen'),
+    resumo: document.getElementById('resumo-screen'),
+    reports: document.getElementById('reports-screen'),
+    receber: document.getElementById('receber-screen'),
+    pagarRecebivel: document.getElementById('pagar-recebivel-screen'),
+  };
+  const toast = document.getElementById('toast');
+  const toastText = document.getElementById('toast-text');
+
+  let corridas = [];
+  let despesas = [];
+  let recebiveis = [];
+  let settings = { taxaCredito: 0, taxaDebito: 0 };
+  let kmDia = { data: null, inicial: null, final: null };
+  let kmDiasMap = {};
+
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  // O antigo new Date().toISOString() usa horário UTC, o que faz qualquer lançamento feito
+  // depois das ~21h (horário de Brasília) cair no dia seguinte quando a gente
+  // olha só a data (dataHora.slice(0,10)). Esta função grava a data e hora LOCAIS,
+  // exatamente como o relógio do celular mostra, evitando esse problema.
+  function nowLocalISO(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+      'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+
+  // Converte um dataHora (ISO, com ou sem Z) pra data de calendário LOCAL.
+  // Necessário porque lançamentos antigos foram gravados em UTC — usar
+  // .slice(0,10) neles pega a data errada perto da meia-noite.
+  function localDateStr(iso){
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function labelPlataforma(p){
+    return p === 'Particular' ? 'Part' : p;
+  }
+
+  function renderListaHoje(containerId, titleId, entries, kind){
+    const container = document.getElementById(containerId);
+    const title = document.getElementById(titleId);
+    const hoje = todayStr();
+    const doDia = entries.filter(e => localDateStr(e.dataHora) === hoje).sort((a,b)=> b.dataHora.localeCompare(a.dataHora));
+    if(doDia.length === 0){
+      title.style.display = 'none';
+      container.innerHTML = '';
+      return;
+    }
+    title.style.display = 'block';
+    const horaFmt = iso => new Date(iso).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    container.innerHTML = doDia.map(e=>{
+      if(kind === 'corrida'){
+        const pag = e.formaPagamento === 'Cartão' ? (e.tipoCartao || 'Cartão') : e.formaPagamento;
+        const pendente = e.formaPagamento === 'A receber';
+        return '<div class="hoje-item clickable" data-id="' + e.id + '"><div class="hoje-item-main"><span class="hoje-item-time">' + horaFmt(e.dataHora) + '</span>' + labelPlataforma(e.plataforma) + ' · ' + pag + '</div><div class="hoje-item-val">' + fmt(pendente ? e.valor : e.bolso) + (pendente ? ' ⏳' : '') + '</div></div>';
+      }
+      const label = e.descricao || e.tipo;
+      return '<div class="hoje-item"><div class="hoje-item-main"><span class="hoje-item-time">' + horaFmt(e.dataHora) + '</span>' + label + '</div><div class="hoje-item-val">' + fmt(e.valor) + '</div></div>';
+    }).join('');
+    if(kind === 'corrida'){
+      container.querySelectorAll('.hoje-item').forEach(el=>{
+        el.addEventListener('click', function(){
+          const entry = corridas.find(c => c.id === el.dataset.id);
+          if(entry) abrirCorridaParaEdicao(entry);
+        });
+      });
+    }
+  }
+
+  const dateFmt = new Intl.DateTimeFormat('pt-BR', { weekday:'long', day:'2-digit', month:'long' });
+  document.getElementById('today-date').textContent = dateFmt.format(new Date());
+
+  function showToast(msg){
+    toastText.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 2200);
+  }
+
+  function goTo(name){
+    Object.values(screens).forEach(s => s.style.display = 'none');
+    screens[name].style.display = 'flex';
+    document.body.classList.toggle('light-menu', name === 'menu');
+    document.body.classList.toggle('screen-stats', name === 'stats' || name === 'fechamentoMensal');
+  }
+  document.querySelectorAll('.back-to-home').forEach(b => b.addEventListener('click', ()=> goTo(b.dataset.back || 'menu')));
+  document.getElementById('open-corridas-menu-btn').addEventListener('click', ()=> abrirNovaCorrida());
+  document.getElementById('open-stats-btn').addEventListener('click', ()=> goTo('stats'));
+  document.getElementById('open-reports-btn').addEventListener('click', ()=>{ relatorioData = todayStr(); renderReports(); goTo('reports'); });
+  document.getElementById('open-receber-btn').addEventListener('click', ()=>{ renderReceberList(); goTo('receber'); });
+  document.getElementById('gear-btn').addEventListener('click', ()=>{
+    taxaCreditoInput.value = String(settings.taxaCredito).replace('.', ',');
+    taxaDebitoInput.value = String(settings.taxaDebito).replace('.', ',');
+    goTo('params');
+  });
+
+  function isSameDay(iso, ref){
+    const d = new Date(iso);
+    return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth() && d.getDate()===ref.getDate();
+  }
+
+  function refreshTodayCount(){
+    const today = new Date();
+    const cToday = corridas.filter(e => isSameDay(e.dataHora, today));
+    const totalCorridas = cToday.reduce((s,e)=> s + e.valor, 0);
+    const totalBolso = cToday.reduce((s,e)=> s + e.bolso, 0);
+    const el = document.getElementById('today-count');
+    if(cToday.length === 0){
+      el.innerHTML = 'Nenhuma corrida hoje';
+    } else {
+      const fmt = v => v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      el.innerHTML = '<b>'+cToday.length+'</b> corrida'+(cToday.length!==1?'s':'')+' · <b>R$ '+fmt(totalCorridas)+'</b> (bolso R$ '+fmt(totalBolso)+')';
+    }
+  }
+
+  // ===== ARMAZENAMENTO (Firestore em tempo real, com localStorage como cache/backup) =====
+  let applyingRemote = false;
+
+  function aplicarDados(payload){
+    applyingRemote = true;
+    corridas = payload.corridas || [];
+    despesas = payload.despesas || [];
+    settings = payload.settings || { taxaCredito: 0, taxaDebito: 0 };
+    kmDiasMap = payload.kmDias || {};
+    recebiveis = payload.recebiveis || [];
+    montarKmDia();
+    refreshTodayCount();
+    updateCorridaLock();
+    updateReceberBadge();
+    applyingRemote = false;
+  }
+
+  async function loadAll(){
+    let carregou = false;
+    try{
+      if(fsDocRef){
+        const snap = await fsDocRef.get();
+        if(snap.exists){
+          aplicarDados(snap.data());
+          carregou = true;
+        }
+      }
+    }catch(err){}
+    if(!carregou){
+      try{
+        const raw = localStorage.getItem('regiscar:dados');
+        if(raw){ aplicarDados(JSON.parse(raw)); carregou = true; }
+      }catch(err){}
+    }
+    if(!carregou){
+      corridas = []; despesas = []; settings = { taxaCredito: 0, taxaDebito: 0 };
+      kmDiasMap = {}; recebiveis = [];
+      montarKmDia(); refreshTodayCount(); updateCorridaLock(); updateReceberBadge();
+    }
+
+    // Escuta mudanças em tempo real vindas de outros aparelhos
+    try{
+      if(fsDocRef){
+        fsDocRef.onSnapshot((snap)=>{
+          if(snap.exists && !snap.metadata.hasPendingWrites){
+            aplicarDados(snap.data());
+          }
+        });
+      }
+    }catch(err){}
+  }
+
+  function updateReceberBadge(){
+    const badge = document.getElementById('receber-badge');
+    const pendentes = recebiveis.filter(r => r.status === 'pendente').length;
+    if(pendentes > 0){
+      badge.style.display = 'flex';
+      badge.textContent = pendentes;
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function kmInicialHerdado(){
+    const hoje = todayStr();
+    const diasAnteriores = Object.keys(kmDiasMap).filter(d => d < hoje && kmDiasMap[d].final != null);
+    if(diasAnteriores.length === 0) return null;
+    diasAnteriores.sort();
+    const ultimoDia = diasAnteriores[diasAnteriores.length - 1];
+    return kmDiasMap[ultimoDia].final;
+  }
+
+  function montarKmDia(){
+    const hoje = todayStr();
+    if(kmDiasMap[hoje]){
+      kmDia = { data: hoje, inicial: kmDiasMap[hoje].inicial, final: kmDiasMap[hoje].final, desconto: kmDiasMap[hoje].desconto || 0 };
+    } else {
+      kmDia = { data: hoje, inicial: kmInicialHerdado(), final: null, desconto: 0 };
+    }
+  }
+
+  function updateCorridaLock(){
+    // A trava agora acontece só no redirecionamento (abrirNovaCorrida), não precisa mais de indicador visual num botão fixo.
+  }
+
+  async function persistAll(){
+    try{
+      if(fsDocRef){
+        const snapAtual = await fsDocRef.get();
+        if(snapAtual.exists){
+          const remoto = snapAtual.data();
+          if(Array.isArray(remoto.recebiveis)){
+            const idsLocais = new Set(recebiveis.map(r => r.id));
+            remoto.recebiveis.forEach(r => {
+              if(r && r.id && !idsLocais.has(r.id)) recebiveis.push(r);
+            });
+          }
+        }
+      }
+    }catch(err){}
+    const payload = {
+      corridas, despesas, settings,
+      kmDias: kmDiasMap, recebiveis,
+      atualizadoEm: Date.now()
+    };
+    let ok = false;
+    try{
+      if(fsDocRef){
+        await fsDocRef.set(payload);
+        ok = true;
+      }
+    }catch(err){}
+    try{
+      localStorage.setItem('regiscar:dados', JSON.stringify(payload));
+      ok = true;
+    }catch(err){}
+    return ok;
+  }
+
+  // ===== CURRENCY MASK HELPER =====
+  function attachMoneyMask(input, onChange){
+    let digits = "0";
+    let ready = false;
+    function render(){
+      const cents = parseInt(digits,10);
+      const reais = Math.floor(cents/100);
+      const centavos = cents%100;
+      input.value = reais.toLocaleString('pt-BR') + ',' + String(centavos).padStart(2,'0');
+      if(onChange && ready) onChange(cents/100);
+    }
+    input.addEventListener('keydown', function(e){
+      if(e.key >= '0' && e.key <= '9'){
+        e.preventDefault();
+        digits = String(parseInt((digits+e.key).slice(-9),10));
+        render();
+      } else if(e.key === 'Backspace'){
+        e.preventDefault();
+        digits = digits.slice(0,-1) || "0";
+        render();
+      }
+    });
+    input.addEventListener('input', function(){
+      const raw = input.value.replace(/\D/g,'');
+      digits = raw ? String(parseInt(raw,10)) : "0";
+      render();
+    });
+    render();
+    ready = true;
+    return {
+      get: ()=> parseInt(digits,10)/100,
+      reset: ()=>{ digits="0"; render(); },
+      set: (valorReais)=>{ digits = String(Math.round((valorReais||0)*100)); render(); }
+    };
+  }
+
+  // ===== CORRIDA SCREEN =====
+  const APP_PLATFORMS = new Set(['Uber','99','InDrive']);
+  const valorInput = document.getElementById('valor-input');
+  const valorMask = attachMoneyMask(valorInput, ()=>{ updateBolso(); updateSaveState(); });
+  const plataformaChips = document.getElementById('plataforma-chips');
+  const pagamentoChips = document.getElementById('pagamento-chips');
+  const tipoCartaoChips = document.getElementById('tipo-cartao-chips');
+  const nomePassageiroField = document.getElementById('nome-passageiro-field');
+  const nomePassageiroInput = document.getElementById('nome-passageiro-input');
+  const valorBolsoManualField = document.getElementById('valor-bolso-manual-field');
+  const valorBolsoManualInput = document.getElementById('valor-bolso-manual-input');
+  const valorBolsoManualMask = attachMoneyMask(valorBolsoManualInput, ()=>{ updateBolso(); updateSaveState(); });
+  const bolsoBox = document.getElementById('bolso-box');
+  const bolsoTaxaRow = document.getElementById('bolso-taxa-row');
+  const bolsoTaxaVal = document.getElementById('bolso-taxa-val');
+  const taxaAppRow = document.getElementById('transferir-row');
+  const taxaAppVal = document.getElementById('transferir-val');
+  const bolsoTotalLabel = document.getElementById('bolso-total-label');
+  const bolsoFinalVal = document.getElementById('bolso-final-val');
+  const obsInput = document.getElementById('obs-input');
+  const saveCorridaBtn = document.getElementById('save-corrida-btn');
+
+  let selectedPlataforma = null;
+  let selectedPagamento = null;
+  let selectedTipoCartao = null;
+
+  function singleSelectChip(container, onSelect){
+    container.addEventListener('click', function(e){
+      const chip = e.target.closest('.chip');
+      if(!chip) return;
+      const wasActive = chip.classList.contains('active') || chip.classList.contains('pay-active');
+      container.querySelectorAll('.chip').forEach(c=>{ c.classList.remove('active','pay-active'); });
+      if(wasActive){
+        onSelect(null);
+      } else {
+        const cls = container.id === 'pagamento-chips' ? 'pay-active' : 'active';
+        chip.classList.add(cls);
+        onSelect(chip.dataset.val);
+      }
+    });
+  }
+  function updateValorBolsoManualVisibility(){
+    const show = APP_PLATFORMS.has(selectedPlataforma) && (selectedPagamento === 'Dinheiro' || selectedPagamento === 'Pix');
+    if(show){
+      valorBolsoManualField.style.display = 'block';
+    } else {
+      valorBolsoManualField.style.display = 'none';
+      valorBolsoManualMask.reset();
+    }
+    updateBolso();
+  }
+  const chipNoApp = document.getElementById('chip-no-app');
+  const corridaScreenEl = document.getElementById('corrida-screen');
+  const corridaFieldsEl = document.getElementById('corrida-fields');
+  const THEME_CLASSES = ['theme-99','theme-uber','theme-indrive','theme-particular'];
+  function aplicarTemaPlataforma(val){
+    corridaScreenEl.classList.remove(...THEME_CLASSES);
+    const map = { '99':'theme-99', 'Uber':'theme-uber', 'InDrive':'theme-indrive', 'Particular':'theme-particular' };
+    if(val && map[val]){
+      corridaScreenEl.classList.add(map[val]);
+      corridaFieldsEl.style.display = 'block';
+    } else {
+      corridaFieldsEl.style.display = 'none';
+    }
+  }
+
+  singleSelectChip(plataformaChips, (val)=>{
+    selectedPlataforma = val;
+    aplicarTemaPlataforma(val);
+    const podeNoApp = APP_PLATFORMS.has(val);
+    chipNoApp.style.display = podeNoApp ? 'flex' : 'none';
+    if(!podeNoApp && selectedPagamento === 'No app'){
+      selectedPagamento = null;
+      pagamentoChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('pay-active'));
+    }
+    updateValorBolsoManualVisibility();
+    updateSaveState();
+    renderListaHojePlataforma(val);
+  });
+  singleSelectChip(pagamentoChips, (val)=>{
+    selectedPagamento = val;
+    if(val === 'Cartão'){
+      tipoCartaoChips.style.display = 'flex';
+    } else {
+      tipoCartaoChips.style.display = 'none';
+      selectedTipoCartao = null;
+      tipoCartaoChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    }
+    nomePassageiroField.style.display = (val === 'A receber') ? 'block' : 'none';
+    if(val !== 'A receber') nomePassageiroInput.value = '';
+    updateValorBolsoManualVisibility();
+    updateSaveState();
+  });
+  singleSelectChip(tipoCartaoChips, (val)=>{ selectedTipoCartao = val; updateBolso(); updateSaveState(); });
+
+  function taxaAtual(){
+    if(selectedTipoCartao === 'Crédito') return settings.taxaCredito || 0;
+    if(selectedTipoCartao === 'Débito') return settings.taxaDebito || 0;
+    return 0;
+  }
+
+  function usaValorBolsoManual(){
+    return APP_PLATFORMS.has(selectedPlataforma) && (selectedPagamento === 'Dinheiro' || selectedPagamento === 'Pix');
+  }
+
+  function taxaAppValorAtual(valor){
+    if(!usaValorBolsoManual()) return 0;
+    const bolsoManual = valorBolsoManualMask.get();
+    if(bolsoManual <= 0) return 0;
+    const diferenca = valor - bolsoManual;
+    return diferenca > 0 ? diferenca : 0;
+  }
+
+  function currentBolso(valor){
+    if(selectedPagamento === 'Cartão' && selectedTipoCartao){
+      const taxa = taxaAtual();
+      return valor - (valor * taxa/100);
+    }
+    if(usaValorBolsoManual()){
+      const bolsoManual = valorBolsoManualMask.get();
+      return bolsoManual > 0 ? bolsoManual : valor;
+    }
+    return valor;
+  }
+
+  function updateBolso(){
+    const valor = valorMask.get();
+    const cartaoPendente = selectedPagamento === 'Cartão' && !selectedTipoCartao;
+    const bolsoManualPendente = usaValorBolsoManual() && valorBolsoManualMask.get() <= 0;
+    if(!selectedPagamento || valor <= 0 || cartaoPendente || bolsoManualPendente){
+      bolsoBox.style.display = 'none';
+      return;
+    }
+    bolsoBox.style.display = 'block';
+
+    if(selectedPagamento === 'A receber'){
+      bolsoTaxaRow.style.display = 'none';
+      taxaAppRow.style.display = 'none';
+      bolsoTotalLabel.textContent = 'Situação';
+      bolsoFinalVal.textContent = 'Fica pendente';
+      return;
+    }
+
+    const fmt = v => v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    if(selectedPagamento === 'Cartão'){
+      bolsoTaxaRow.style.display = 'flex';
+      bolsoTaxaVal.textContent = selectedTipoCartao + ' · ' + taxaAtual().toLocaleString('pt-BR') + '%';
+    } else {
+      bolsoTaxaRow.style.display = 'none';
+    }
+
+    const taxaApp = taxaAppValorAtual(valor);
+    if(taxaApp > 0){
+      taxaAppRow.style.display = 'flex';
+      taxaAppRow.querySelector('span').textContent = 'Taxa do app';
+      taxaAppVal.textContent = 'R$ ' + fmt(taxaApp);
+    } else {
+      taxaAppRow.style.display = 'none';
+    }
+
+    bolsoTotalLabel.textContent = 'Vai pro bolso';
+    bolsoFinalVal.textContent = 'R$ ' + fmt(currentBolso(valor));
+  }
+
+  function updateSaveState(){
+    const cartaoOk = selectedPagamento !== 'Cartão' || !!selectedTipoCartao;
+    const nomeOk = selectedPagamento !== 'A receber' || nomePassageiroInput.value.trim().length > 0;
+    const bolsoManualOk = !usaValorBolsoManual() || valorBolsoManualMask.get() > 0;
+    const valorOk = valorMask.get() > 0;
+    saveCorridaBtn.disabled = !(valorOk && selectedPlataforma && selectedPagamento && cartaoOk && nomeOk && bolsoManualOk);
+
+    const hint = document.getElementById('save-corrida-hint');
+    const started = valorOk || selectedPlataforma || selectedPagamento;
+    if(!saveCorridaBtn.disabled || !started){
+      hint.style.display = 'none';
+    } else if(!valorOk){
+      hint.textContent = 'Preenche o valor da corrida';
+      hint.style.display = 'block';
+    } else if(!selectedPlataforma){
+      hint.textContent = 'Escolhe a plataforma (Particular, Uber, 99 ou InDrive)';
+      hint.style.display = 'block';
+    } else if(!selectedPagamento){
+      hint.textContent = 'Escolhe a forma de pagamento';
+      hint.style.display = 'block';
+    } else if(!cartaoOk){
+      hint.textContent = 'Escolhe Crédito ou Débito';
+      hint.style.display = 'block';
+    } else if(!bolsoManualOk){
+      hint.textContent = 'Preenche quanto foi pro bolso';
+      hint.style.display = 'block';
+    } else if(!nomeOk){
+      hint.textContent = 'Preenche o nome do passageiro pra salvar como "a receber"';
+      hint.style.display = 'block';
+    } else {
+      hint.style.display = 'none';
+    }
+  }
+  nomePassageiroInput.addEventListener('input', updateSaveState);
+
+  let editingCorridaId = null;
+  const deleteCorridaBtn = document.getElementById('delete-corrida-btn');
+  const corridaScreenTitle = document.getElementById('corrida-screen-title');
+
+  function resetFormCorrida(){
+    valorMask.reset();
+    valorBolsoManualMask.reset();
+    selectedPlataforma = null; selectedPagamento = null; selectedTipoCartao = null;
+    plataformaChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    pagamentoChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('pay-active'));
+    tipoCartaoChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    tipoCartaoChips.style.display = 'none';
+    chipNoApp.style.display = 'none';
+    nomePassageiroField.style.display = 'none';
+    nomePassageiroInput.value = '';
+    valorBolsoManualField.style.display = 'none';
+    bolsoBox.style.display = 'none';
+    obsInput.value = '';
+    aplicarTemaPlataforma(null);
+  }
+
+  function renderListaHojePlataforma(plataforma){
+    if(!plataforma){
+      document.getElementById('corrida-hoje-title').style.display = 'none';
+      document.getElementById('corrida-hoje-list').innerHTML = '';
+      return;
+    }
+    const doPlataforma = corridas.filter(c => c.plataforma === plataforma);
+    renderListaHoje('corrida-hoje-list', 'corrida-hoje-title', doPlataforma, 'corrida');
+  }
+
+  let corridaVoltarPara = 'menu';
+  const corridaBackBtn = corridaScreenEl.querySelector('.back-to-home');
+
+  function voltarDaEdicaoCorrida(){
+    if(corridaVoltarPara === 'reports') renderReports();
+    goTo(corridaVoltarPara);
+  }
+
+  function abrirNovaCorrida(){
+    if(kmDia.inicial == null){
+      showToast('Registra o Km inicial antes de lançar corridas');
+      abrirKmScreen();
+      return;
+    }
+    editingCorridaId = null;
+    corridaVoltarPara = 'menu';
+    corridaBackBtn.dataset.back = 'menu';
+    corridaScreenTitle.textContent = 'Nova corrida';
+    saveCorridaBtn.textContent = 'Salvar corrida';
+    deleteCorridaBtn.style.display = 'none';
+    resetFormCorrida();
+    updateSaveState();
+    renderListaHojePlataforma(null);
+    goTo('corrida');
+  }
+
+  function abrirCorridaParaEdicao(entry, origem){
+    corridaVoltarPara = origem || 'menu';
+    corridaBackBtn.dataset.back = corridaVoltarPara;
+    editingCorridaId = entry.id;
+    resetFormCorrida();
+    corridaScreenTitle.textContent = 'Editar corrida';
+    saveCorridaBtn.textContent = 'Salvar alterações';
+    deleteCorridaBtn.style.display = 'flex';
+
+    // plataforma
+    selectedPlataforma = entry.plataforma;
+    plataformaChips.querySelectorAll('.chip').forEach(c=>{
+      c.classList.toggle('active', c.dataset.val === entry.plataforma);
+    });
+    chipNoApp.style.display = APP_PLATFORMS.has(entry.plataforma) ? 'flex' : 'none';
+    aplicarTemaPlataforma(entry.plataforma);
+
+    // valor
+    valorMask.set(entry.valor);
+
+    // pagamento
+    selectedPagamento = entry.formaPagamento;
+    pagamentoChips.querySelectorAll('.chip').forEach(c=>{
+      c.classList.toggle('pay-active', c.dataset.val === entry.formaPagamento);
+    });
+    if(entry.formaPagamento === 'Cartão'){
+      tipoCartaoChips.style.display = 'flex';
+      selectedTipoCartao = entry.tipoCartao;
+      tipoCartaoChips.querySelectorAll('.chip').forEach(c=>{
+        c.classList.toggle('active', c.dataset.val === entry.tipoCartao);
+      });
+    }
+
+    // valor que foi pro bolso (quando aplicável)
+    if(APP_PLATFORMS.has(entry.plataforma) && (entry.formaPagamento === 'Dinheiro' || entry.formaPagamento === 'Pix') && entry.bolso != null){
+      valorBolsoManualMask.set(entry.bolso);
+    }
+
+    obsInput.value = entry.observacao || '';
+    updateValorBolsoManualVisibility();
+    updateBolso();
+    updateSaveState();
+    renderListaHojePlataforma(null);
+    goTo('corrida');
+  }
+
+  deleteCorridaBtn.addEventListener('click', async function(){
+    if(!editingCorridaId) return;
+    const idx = corridas.findIndex(c => c.id === editingCorridaId);
+    if(idx === -1) return;
+    deleteCorridaBtn.disabled = true;
+    deleteCorridaBtn.textContent = 'Excluindo…';
+    const removida = corridas.splice(idx, 1)[0];
+    let recebivelIdxRemovido = -1, recebivelRemovido = null;
+    if(removida.formaPagamento === 'A receber'){
+      recebivelIdxRemovido = recebiveis.findIndex(r => r.corridaId === removida.id && r.status === 'pendente');
+      if(recebivelIdxRemovido !== -1) recebivelRemovido = recebiveis.splice(recebivelIdxRemovido, 1)[0];
+    }
+    const ok = await persistAll();
+    deleteCorridaBtn.disabled = false;
+    deleteCorridaBtn.textContent = 'Excluir corrida';
+    if(ok){
+      showToast('Corrida excluída ✓');
+      refreshTodayCount();
+      updateReceberBadge();
+      editingCorridaId = null;
+      voltarDaEdicaoCorrida();
+    } else {
+      corridas.splice(idx, 0, removida);
+      if(recebivelRemovido) recebiveis.splice(recebivelIdxRemovido, 0, recebivelRemovido);
+      showToast('Não deu pra excluir, tenta de novo');
+    }
+  });
+
+  saveCorridaBtn.addEventListener('click', async function(){
+    const valor = valorMask.get();
+    const cartaoOk = selectedPagamento !== 'Cartão' || !!selectedTipoCartao;
+    const nomeOk = selectedPagamento !== 'A receber' || nomePassageiroInput.value.trim().length > 0;
+    if(!(valor > 0 && selectedPlataforma && selectedPagamento && cartaoOk && nomeOk)) return;
+    saveCorridaBtn.disabled = true;
+    saveCorridaBtn.textContent = 'Salvando…';
+
+    if(selectedPagamento === 'A receber'){
+      let dataCorridaRecebivel = todayStr();
+      let horaCorridaRecebivel = nowLocalISO();
+      let corridaOriginal = null;
+      let idxOriginal = -1;
+      let corridaId = null;
+      if(editingCorridaId){
+        idxOriginal = corridas.findIndex(c => c.id === editingCorridaId);
+        if(idxOriginal !== -1){
+          corridaOriginal = corridas[idxOriginal];
+          dataCorridaRecebivel = localDateStr(corridaOriginal.dataHora);
+          horaCorridaRecebivel = corridaOriginal.dataHora;
+          corridaId = corridaOriginal.id;
+          corridas[idxOriginal] = {
+            ...corridaOriginal,
+            plataforma: selectedPlataforma,
+            valor: valor,
+            formaPagamento: 'A receber',
+            tipoCartao: null,
+            taxaAplicada: 0,
+            taxaAppValor: 0,
+            bolso: 0,
+            observacao: obsInput.value.trim()
+          };
+        }
+      }
+      if(idxOriginal === -1){
+        corridaId = Date.now()+'-'+Math.random().toString(36).slice(2,8);
+        corridas.push({
+          id: corridaId,
+          dataHora: horaCorridaRecebivel,
+          plataforma: selectedPlataforma,
+          valor: valor,
+          formaPagamento: 'A receber',
+          tipoCartao: null,
+          taxaAplicada: 0,
+          taxaAppValor: 0,
+          bolso: 0,
+          observacao: obsInput.value.trim()
+        });
+      }
+      const recebivel = {
+        id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+        corridaId: corridaId,
+        dataCorrida: dataCorridaRecebivel,
+        horaCorrida: horaCorridaRecebivel,
+        plataforma: selectedPlataforma,
+        valor: valor,
+        nomePassageiro: nomePassageiroInput.value.trim(),
+        observacao: obsInput.value.trim(),
+        status: 'pendente',
+        dataPagamento: null,
+        formaPagamento: null,
+        tipoCartao: null,
+        bolso: null
+      };
+      recebiveis.push(recebivel);
+      const ok = await persistAll();
+      saveCorridaBtn.textContent = editingCorridaId ? 'Salvar alterações' : 'Salvar corrida';
+      if(ok){
+        showToast(editingCorridaId ? 'Corrida movida pra "A receber" ✓' : 'Ficou registrado como pendente ✓');
+        updateReceberBadge();
+        refreshTodayCount();
+        if(editingCorridaId){
+          editingCorridaId = null;
+          voltarDaEdicaoCorrida();
+        } else {
+          abrirNovaCorrida();
+        }
+      } else {
+        recebiveis.pop();
+        if(idxOriginal !== -1){
+          corridas[idxOriginal] = corridaOriginal;
+        } else {
+          const pushedIdx = corridas.findIndex(c => c.id === corridaId);
+          if(pushedIdx !== -1) corridas.splice(pushedIdx, 1);
+        }
+        showToast('Não deu pra salvar, tenta de novo');
+        saveCorridaBtn.disabled = false;
+      }
+      return;
+    }
+
+    const taxaApp = taxaAppValorAtual(valor);
+
+    if(editingCorridaId){
+      const idx = corridas.findIndex(c => c.id === editingCorridaId);
+      if(idx === -1){ saveCorridaBtn.disabled = false; return; }
+      const original = corridas[idx];
+      const atualizada = {
+        ...original,
+        plataforma: selectedPlataforma,
+        valor: valor,
+        formaPagamento: selectedPagamento,
+        tipoCartao: selectedPagamento === 'Cartão' ? selectedTipoCartao : null,
+        taxaAplicada: selectedPagamento === 'Cartão' ? taxaAtual() : 0,
+        taxaAppValor: taxaApp,
+        bolso: currentBolso(valor),
+        observacao: obsInput.value.trim()
+      };
+      corridas[idx] = atualizada;
+      let recebivelIdxRemovido = -1, recebivelRemovido = null;
+      if(original.formaPagamento === 'A receber'){
+        recebivelIdxRemovido = recebiveis.findIndex(r => r.corridaId === original.id && r.status === 'pendente');
+        if(recebivelIdxRemovido !== -1) recebivelRemovido = recebiveis.splice(recebivelIdxRemovido, 1)[0];
+      }
+      const ok = await persistAll();
+      saveCorridaBtn.textContent = 'Salvar alterações';
+      if(ok){
+        showToast('Corrida atualizada ✓');
+        refreshTodayCount();
+        updateReceberBadge();
+        editingCorridaId = null;
+        voltarDaEdicaoCorrida();
+      } else {
+        corridas[idx] = original;
+        if(recebivelRemovido) recebiveis.splice(recebivelIdxRemovido, 0, recebivelRemovido);
+        showToast('Não deu pra salvar, tenta de novo');
+        saveCorridaBtn.disabled = false;
+      }
+      return;
+    }
+
+    const entry = {
+      id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+      dataHora: nowLocalISO(),
+      plataforma: selectedPlataforma,
+      valor: valor,
+      formaPagamento: selectedPagamento,
+      tipoCartao: selectedPagamento === 'Cartão' ? selectedTipoCartao : null,
+      taxaAplicada: selectedPagamento === 'Cartão' ? taxaAtual() : 0,
+      taxaAppValor: taxaApp,
+      bolso: currentBolso(valor),
+      observacao: obsInput.value.trim()
+    };
+    corridas.push(entry);
+    const ok = await persistAll();
+    saveCorridaBtn.textContent = 'Salvar corrida';
+    if(ok){
+      showToast('Corrida salva ✓');
+      refreshTodayCount();
+      abrirNovaCorrida();
+    } else {
+      corridas.pop();
+      showToast('Não deu pra salvar, tenta de novo');
+      saveCorridaBtn.disabled = false;
+    }
+  });
+
+  // ===== DESPESA SCREEN =====
+  const despesaObsInput = document.getElementById('despesa-obs-input');
+  const despesaCharCount = document.getElementById('despesa-char-count');
+  const despesaKmInput = document.getElementById('despesa-km-input');
+  const despesaLitrosInput = document.getElementById('despesa-litros-input');
+  const despesaValorInput = document.getElementById('despesa-valor-input');
+  const saveDespesaBtn = document.getElementById('save-despesa-btn');
+
+  despesaObsInput.addEventListener('input', function(){
+    despesaCharCount.textContent = despesaObsInput.value.length;
+    updateDespesaSaveState();
+  });
+  [despesaKmInput, despesaLitrosInput].forEach(inp=>{
+    inp.addEventListener('input', function(){
+      let v = inp.value.replace(',', '.').replace(/[^0-9.]/g,'');
+      const parts = v.split('.');
+      if(parts.length>2) v = parts[0]+'.'+parts.slice(1).join('');
+      inp.value = v;
+      updateDespesaSaveState();
+    });
+  });
+  const despesaValorMask = attachMoneyMask(despesaValorInput, updateDespesaSaveState);
+
+  function updateDespesaSaveState(){
+    const hasDesc = despesaObsInput.value.trim().length > 0;
+    const hasValor = despesaValorMask.get() > 0;
+    saveDespesaBtn.disabled = !(hasDesc && hasValor);
+  }
+
+  document.getElementById('open-despesa-menu-btn').addEventListener('click', function(){
+    editingDespesaGeralId = null;
+    despesaGeralVoltarPara = 'menu';
+    despesaGeralBackBtn.dataset.back = 'menu';
+    despesaGeralScreenTitle.textContent = 'Despesa';
+    saveDespesaGeralBtn.textContent = 'Salvar despesa';
+    deleteDespesaGeralBtn.style.display = 'none';
+    despesaGeralFavorecidoInput.value = '';
+    despesaGeralMask.reset();
+    saveDespesaGeralBtn.disabled = true;
+    renderListaHoje('despesa-geral-hoje-list', 'despesa-geral-hoje-title', despesas.filter(d => (d.tipo||'geral') === 'geral'), 'despesa');
+    document.getElementById('despesa-geral-hoje-title').style.display = '';
+    goTo('despesaGeral');
+  });
+
+  const deleteDespesaBtn = document.getElementById('delete-despesa-btn');
+  const despesaScreenTitle = document.getElementById('despesa-screen-title');
+  let editingDespesaId = null;
+  let despesaVoltarPara = 'menu';
+  const despesaBackBtn = document.getElementById('despesa-screen').querySelector('.back-to-home');
+
+  document.getElementById('open-combustivel-menu-btn').addEventListener('click', function(){
+    editingDespesaId = null;
+    despesaVoltarPara = 'menu';
+    despesaBackBtn.dataset.back = 'menu';
+    despesaScreenTitle.textContent = 'Combustível';
+    saveDespesaBtn.textContent = 'Salvar despesa';
+    deleteDespesaBtn.style.display = 'none';
+    despesaObsInput.value = ''; despesaCharCount.textContent = '0';
+    despesaKmInput.value = ''; despesaLitrosInput.value = ''; despesaValorMask.reset();
+    saveDespesaBtn.disabled = true;
+    renderListaHoje('combustivel-hoje-list', 'combustivel-hoje-title', despesas.filter(d => d.tipo === 'combustivel'), 'despesa');
+    document.getElementById('combustivel-hoje-title').style.display = '';
+    goTo('despesa');
+  });
+
+  function abrirDespesaParaEdicao(entry, origem){
+    editingDespesaId = entry.id;
+    despesaVoltarPara = origem || 'menu';
+    despesaBackBtn.dataset.back = despesaVoltarPara;
+    despesaScreenTitle.textContent = 'Editar despesa';
+    saveDespesaBtn.textContent = 'Salvar alterações';
+    deleteDespesaBtn.style.display = 'block';
+    despesaObsInput.value = entry.descricao || ''; despesaCharCount.textContent = String(despesaObsInput.value.length);
+    despesaKmInput.value = entry.km || '';
+    despesaLitrosInput.value = entry.litros || '';
+    despesaValorMask.set(entry.valor || 0);
+    saveDespesaBtn.disabled = false;
+    document.getElementById('combustivel-hoje-title').style.display = 'none';
+    document.getElementById('combustivel-hoje-list').innerHTML = '';
+    goTo('despesa');
+  }
+
+  function voltarDaEdicaoDespesa(){
+    if(despesaVoltarPara === 'reports') renderReports();
+    goTo(despesaVoltarPara);
+  }
+
+  saveDespesaBtn.addEventListener('click', async function(){
+    const desc = despesaObsInput.value.trim();
+    const valor = despesaValorMask.get();
+    if(!(desc && valor > 0)) return;
+    saveDespesaBtn.disabled = true;
+    saveDespesaBtn.textContent = 'Salvando…';
+
+    const campos = {
+      tipo: 'combustivel',
+      descricao: desc,
+      km: parseFloat(despesaKmInput.value.replace(',','.')) || 0,
+      litros: parseFloat(despesaLitrosInput.value.replace(',','.')) || 0,
+      valor: valor
+    };
+
+    if(editingDespesaId){
+      const idx = despesas.findIndex(d => d.id === editingDespesaId);
+      if(idx === -1) return;
+      const original = despesas[idx];
+      despesas[idx] = Object.assign({}, original, campos);
+      const ok = await persistAll();
+      saveDespesaBtn.textContent = 'Salvar alterações';
+      if(ok){
+        showToast('Despesa atualizada ✓');
+        refreshTodayCount();
+        editingDespesaId = null;
+        voltarDaEdicaoDespesa();
+      } else {
+        despesas[idx] = original;
+        showToast('Não deu pra salvar, tenta de novo');
+        saveDespesaBtn.disabled = false;
+      }
+      return;
+    }
+
+    const entry = Object.assign({
+      id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+      dataHora: nowLocalISO()
+    }, campos);
+    despesas.push(entry);
+    const ok = await persistAll();
+    saveDespesaBtn.textContent = 'Salvar despesa';
+    if(ok){
+      showToast('Despesa salva ✓');
+      refreshTodayCount();
+      renderListaHoje('combustivel-hoje-list', 'combustivel-hoje-title', despesas.filter(d => d.tipo === 'combustivel'), 'despesa');
+      despesaObsInput.value = ''; despesaCharCount.textContent = '0';
+      despesaKmInput.value = ''; despesaLitrosInput.value = ''; despesaValorMask.reset();
+      saveDespesaBtn.disabled = true;
+    } else {
+      despesas.pop();
+      showToast('Não deu pra salvar, tenta de novo');
+      saveDespesaBtn.disabled = false;
+    }
+  });
+
+  deleteDespesaBtn.addEventListener('click', async function(){
+    if(!editingDespesaId) return;
+    const idx = despesas.findIndex(d => d.id === editingDespesaId);
+    if(idx === -1) return;
+    deleteDespesaBtn.disabled = true;
+    deleteDespesaBtn.textContent = 'Excluindo…';
+    const removida = despesas.splice(idx, 1)[0];
+    const ok = await persistAll();
+    deleteDespesaBtn.disabled = false;
+    deleteDespesaBtn.textContent = 'Excluir despesa';
+    if(ok){
+      showToast('Despesa excluída ✓');
+      refreshTodayCount();
+      editingDespesaId = null;
+      voltarDaEdicaoDespesa();
+    } else {
+      despesas.splice(idx, 0, removida);
+      showToast('Não deu pra excluir, tenta de novo');
+    }
+  });
+
+  // ===== DESPESA GERAL =====
+  const despesaGeralFavorecidoInput = document.getElementById('despesa-geral-favorecido-input');
+  const despesaGeralValorInput = document.getElementById('despesa-geral-valor-input');
+  const saveDespesaGeralBtn = document.getElementById('save-despesa-geral-btn');
+  const deleteDespesaGeralBtn = document.getElementById('delete-despesa-geral-btn');
+  const despesaGeralScreenTitle = document.getElementById('despesa-geral-screen-title');
+  const despesaGeralMask = attachMoneyMask(despesaGeralValorInput, updateDespesaGeralSaveState);
+  let editingDespesaGeralId = null;
+  let despesaGeralVoltarPara = 'menu';
+  const despesaGeralBackBtn = document.getElementById('despesa-geral-screen').querySelector('.back-to-home');
+
+  function updateDespesaGeralSaveState(){
+    const hasFav = despesaGeralFavorecidoInput.value.trim().length > 0;
+    saveDespesaGeralBtn.disabled = !(hasFav && despesaGeralMask.get() > 0);
+  }
+  despesaGeralFavorecidoInput.addEventListener('input', updateDespesaGeralSaveState);
+
+  function voltarDaEdicaoDespesaGeral(){
+    if(despesaGeralVoltarPara === 'reports') renderReports();
+    goTo(despesaGeralVoltarPara);
+  }
+
+  function abrirDespesaGeralParaEdicao(entry, origem){
+    editingDespesaGeralId = entry.id;
+    despesaGeralVoltarPara = origem || 'menu';
+    despesaGeralBackBtn.dataset.back = despesaGeralVoltarPara;
+    despesaGeralScreenTitle.textContent = 'Editar despesa';
+    saveDespesaGeralBtn.textContent = 'Salvar alterações';
+    deleteDespesaGeralBtn.style.display = 'block';
+    despesaGeralFavorecidoInput.value = entry.descricao || '';
+    despesaGeralMask.set(entry.valor || 0);
+    saveDespesaGeralBtn.disabled = false;
+    document.getElementById('despesa-geral-hoje-title').style.display = 'none';
+    document.getElementById('despesa-geral-hoje-list').innerHTML = '';
+    goTo('despesaGeral');
+  }
+
+  saveDespesaGeralBtn.addEventListener('click', async function(){
+    const favorecido = despesaGeralFavorecidoInput.value.trim();
+    const valor = despesaGeralMask.get();
+    if(!(favorecido && valor > 0)) return;
+    saveDespesaGeralBtn.disabled = true;
+    saveDespesaGeralBtn.textContent = 'Salvando…';
+
+    if(editingDespesaGeralId){
+      const idx = despesas.findIndex(d => d.id === editingDespesaGeralId);
+      if(idx === -1) return;
+      const original = despesas[idx];
+      despesas[idx] = Object.assign({}, original, { descricao: favorecido, valor: valor });
+      const ok = await persistAll();
+      saveDespesaGeralBtn.textContent = 'Salvar alterações';
+      if(ok){
+        showToast('Despesa atualizada ✓');
+        refreshTodayCount();
+        editingDespesaGeralId = null;
+        voltarDaEdicaoDespesaGeral();
+      } else {
+        despesas[idx] = original;
+        showToast('Não deu pra salvar, tenta de novo');
+        saveDespesaGeralBtn.disabled = false;
+      }
+      return;
+    }
+
+    const entry = {
+      id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+      dataHora: nowLocalISO(),
+      tipo: 'geral',
+      descricao: favorecido,
+      km: 0,
+      litros: 0,
+      valor: valor
+    };
+    despesas.push(entry);
+    const ok = await persistAll();
+    saveDespesaGeralBtn.textContent = 'Salvar despesa';
+    if(ok){
+      showToast('Despesa salva ✓');
+      refreshTodayCount();
+      renderListaHoje('despesa-geral-hoje-list', 'despesa-geral-hoje-title', despesas.filter(d => (d.tipo||'geral') === 'geral'), 'despesa');
+      despesaGeralFavorecidoInput.value = '';
+      despesaGeralMask.reset();
+      saveDespesaGeralBtn.disabled = true;
+    } else {
+      despesas.pop();
+      showToast('Não deu pra salvar, tenta de novo');
+      saveDespesaGeralBtn.disabled = false;
+    }
+  });
+
+  deleteDespesaGeralBtn.addEventListener('click', async function(){
+    if(!editingDespesaGeralId) return;
+    const idx = despesas.findIndex(d => d.id === editingDespesaGeralId);
+    if(idx === -1) return;
+    deleteDespesaGeralBtn.disabled = true;
+    deleteDespesaGeralBtn.textContent = 'Excluindo…';
+    const removida = despesas.splice(idx, 1)[0];
+    const ok = await persistAll();
+    deleteDespesaGeralBtn.disabled = false;
+    deleteDespesaGeralBtn.textContent = 'Excluir despesa';
+    if(ok){
+      showToast('Despesa excluída ✓');
+      refreshTodayCount();
+      editingDespesaGeralId = null;
+      voltarDaEdicaoDespesaGeral();
+    } else {
+      despesas.splice(idx, 0, removida);
+      showToast('Não deu pra excluir, tenta de novo');
+    }
+  });
+
+
+  // ===== A RECEBER =====
+  let selectedRecebivelId = null;
+
+  function renderReceberList(){
+    const pendList = document.getElementById('receber-pendentes-list');
+    const pagList = document.getElementById('receber-pagos-list');
+    const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const dataFmtCurta = iso => new Date(iso).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'});
+
+    const pendentes = recebiveis.filter(r => r.status === 'pendente').sort((a,b)=> a.horaCorrida.localeCompare(b.horaCorrida));
+    const pagos = recebiveis.filter(r => r.status === 'pago').sort((a,b)=> b.dataPagamento.localeCompare(a.dataPagamento)).slice(0, 15);
+
+    if(pendentes.length === 0){
+      pendList.innerHTML = '<div class="receber-empty">Ninguém te devendo no momento 🎉</div>';
+    } else {
+      pendList.innerHTML = pendentes.map(r => {
+        const nome = (r.nomePassageiro || '').trim();
+        const hora = r.horaCorrida ? dataFmtCurta(r.horaCorrida) : (r.dataCorrida ? dataFmtCurta(r.dataCorrida + 'T00:00:00') : '—');
+        return `
+        <div class="receber-item" data-id="${r.id}">
+          <div class="receber-item-icon">${nome.charAt(0).toUpperCase() || '?'}</div>
+          <div class="receber-item-info">
+            <div class="receber-item-name">${nome || 'Sem nome'}</div>
+            <div class="receber-item-meta">${hora} · ${labelPlataforma(r.plataforma || '')}</div>
+          </div>
+          <div class="receber-item-val">${fmt(r.valor || 0)}</div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    if(pagos.length === 0){
+      pagList.innerHTML = '<div class="receber-empty">Nada por aqui ainda</div>';
+    } else {
+      pagList.innerHTML = pagos.map(r => `
+        <div class="receber-item pago">
+          <div class="receber-item-icon">✓</div>
+          <div class="receber-item-info">
+            <div class="receber-item-name">${r.nomePassageiro}</div>
+            <div class="receber-item-meta">Pago em ${dataFmtCurta(r.dataPagamento + 'T00:00:00')} · ${r.formaPagamento}${r.tipoCartao ? ' ('+r.tipoCartao+')' : ''}</div>
+          </div>
+          <div class="receber-item-val">${fmt(r.valor)}</div>
+        </div>
+      `).join('');
+    }
+
+    pendList.querySelectorAll('.receber-item').forEach(el=>{
+      el.addEventListener('click', function(){
+        selectedRecebivelId = el.dataset.id;
+        const r = recebiveis.find(x => x.id === selectedRecebivelId);
+        document.getElementById('pagar-recebivel-title').textContent = r.nomePassageiro + ' · ' + fmt(r.valor);
+        pagamentoRecebivelChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('pay-active'));
+        tipoCartaoRecebivelChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+        tipoCartaoRecebivelChips.style.display = 'none';
+        selectedPagamentoRecebivel = null;
+        selectedTipoCartaoRecebivel = null;
+        updateConfirmarRecebimentoState();
+        goTo('pagarRecebivel');
+      });
+    });
+  }
+
+  const pagamentoRecebivelChips = document.getElementById('pagamento-recebivel-chips');
+  const tipoCartaoRecebivelChips = document.getElementById('tipo-cartao-recebivel-chips');
+  const confirmarRecebimentoBtn = document.getElementById('confirmar-recebimento-btn');
+  let selectedPagamentoRecebivel = null;
+  let selectedTipoCartaoRecebivel = null;
+
+  function updateConfirmarRecebimentoState(){
+    const cartaoOk = selectedPagamentoRecebivel !== 'Cartão' || !!selectedTipoCartaoRecebivel;
+    confirmarRecebimentoBtn.disabled = !(selectedPagamentoRecebivel && cartaoOk);
+  }
+
+  pagamentoRecebivelChips.addEventListener('click', function(e){
+    const chip = e.target.closest('.chip');
+    if(!chip) return;
+    const wasActive = chip.classList.contains('pay-active');
+    pagamentoRecebivelChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('pay-active'));
+    if(wasActive){
+      selectedPagamentoRecebivel = null;
+    } else {
+      chip.classList.add('pay-active');
+      selectedPagamentoRecebivel = chip.dataset.val;
+    }
+    if(selectedPagamentoRecebivel === 'Cartão'){
+      tipoCartaoRecebivelChips.style.display = 'flex';
+    } else {
+      tipoCartaoRecebivelChips.style.display = 'none';
+      selectedTipoCartaoRecebivel = null;
+      tipoCartaoRecebivelChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    }
+    updateConfirmarRecebimentoState();
+  });
+  tipoCartaoRecebivelChips.addEventListener('click', function(e){
+    const chip = e.target.closest('.chip');
+    if(!chip) return;
+    const wasActive = chip.classList.contains('active');
+    tipoCartaoRecebivelChips.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    if(wasActive){
+      selectedTipoCartaoRecebivel = null;
+    } else {
+      chip.classList.add('active');
+      selectedTipoCartaoRecebivel = chip.dataset.val;
+    }
+    updateConfirmarRecebimentoState();
+  });
+
+  confirmarRecebimentoBtn.addEventListener('click', async function(){
+    if(!selectedRecebivelId) return;
+    const r = recebiveis.find(x => x.id === selectedRecebivelId);
+    if(!r) return;
+    confirmarRecebimentoBtn.disabled = true;
+    confirmarRecebimentoBtn.textContent = 'Confirmando…';
+
+    const taxa = selectedTipoCartaoRecebivel === 'Crédito' ? (settings.taxaCredito||0)
+               : selectedTipoCartaoRecebivel === 'Débito' ? (settings.taxaDebito||0) : 0;
+    const bolso = (selectedPagamentoRecebivel === 'Cartão' && selectedTipoCartaoRecebivel)
+      ? r.valor - (r.valor * taxa/100) : r.valor;
+
+    r.status = 'pago';
+    r.dataPagamento = todayStr();
+    r.formaPagamento = selectedPagamentoRecebivel;
+    r.tipoCartao = selectedPagamentoRecebivel === 'Cartão' ? selectedTipoCartaoRecebivel : null;
+    r.bolso = bolso;
+
+    const idxCorridaLigada = r.corridaId ? corridas.findIndex(c => c.id === r.corridaId) : -1;
+    let corridaAnterior = null;
+    let corridaNova = null;
+
+    if(idxCorridaLigada !== -1){
+      corridaAnterior = corridas[idxCorridaLigada];
+      corridas[idxCorridaLigada] = {
+        ...corridaAnterior,
+        formaPagamento: selectedPagamentoRecebivel,
+        tipoCartao: r.tipoCartao,
+        taxaAplicada: taxa,
+        taxaAppValor: 0,
+        bolso: bolso
+      };
+    } else {
+      // Recebível antigo, sem corrida vinculada — mantém o comportamento anterior
+      corridaNova = {
+        id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+        dataHora: nowLocalISO(),
+        plataforma: r.plataforma,
+        valor: r.valor,
+        formaPagamento: selectedPagamentoRecebivel,
+        tipoCartao: r.tipoCartao,
+        taxaAplicada: taxa,
+        taxaAppValor: 0,
+        bolso: bolso,
+        observacao: 'Recebimento atrasado — ' + r.nomePassageiro + ' (corrida de ' + r.dataCorrida.split('-').reverse().join('/') + ')'
+      };
+      corridas.push(corridaNova);
+    }
+
+    const ok = await persistAll();
+    confirmarRecebimentoBtn.textContent = 'Confirmar recebimento';
+    if(ok){
+      showToast('Recebimento confirmado ✓');
+      updateReceberBadge();
+      refreshTodayCount();
+      renderReceberList();
+      goTo('receber');
+    } else {
+      r.status = 'pendente'; r.dataPagamento = null; r.formaPagamento = null; r.tipoCartao = null; r.bolso = null;
+      if(idxCorridaLigada !== -1){
+        corridas[idxCorridaLigada] = corridaAnterior;
+      } else if(corridaNova){
+        corridas.pop();
+      }
+      showToast('Não deu pra confirmar, tenta de novo');
+      confirmarRecebimentoBtn.disabled = false;
+    }
+  });
+
+  // ===== KM SCREEN =====
+  const kmInicialReadonlyField = document.getElementById('km-inicial-readonly-field');
+  const kmInicialInputField = document.getElementById('km-inicial-input-field');
+  const kmInherLbl = document.getElementById('km-inherited-lbl');
+  const kmInherVal = document.getElementById('km-inherited-val');
+  const kmInherEdit = document.getElementById('km-inherited-edit');
+  const kmInicialInput = document.getElementById('km-inicial-input');
+  const kmFinalInput = document.getElementById('km-final-input');
+  const kmDescontoInput = document.getElementById('km-desconto-input');
+  const kmBrutoRow = document.getElementById('km-bruto-row');
+  const kmBrutoVal = document.getElementById('km-bruto-val');
+  const kmResultadoBox = document.getElementById('km-resultado-box');
+  const kmResultadoVal = document.getElementById('km-resultado-val');
+  const saveKmBtn = document.getElementById('save-km-btn');
+  let kmInicialManualMode = false;
+
+  function sanitizeIntInput(input){
+    input.addEventListener('input', function(){
+      input.value = input.value.replace(/\D/g,'');
+      updateKmResultado();
+    });
+  }
+  sanitizeIntInput(kmInicialInput);
+  sanitizeIntInput(kmFinalInput);
+  sanitizeIntInput(kmDescontoInput);
+
+  function kmInicialAtual(){
+    if(kmInicialManualMode){
+      return kmInicialInput.value ? parseInt(kmInicialInput.value, 10) : NaN;
+    }
+    return kmDia.inicial != null ? kmDia.inicial : NaN;
+  }
+
+  function updateKmResultado(){
+    const ini = kmInicialAtual();
+    const fim = parseInt(kmFinalInput.value, 10);
+    const desconto = kmDescontoInput.value ? parseInt(kmDescontoInput.value, 10) : 0;
+    if(!isNaN(ini) && !isNaN(fim) && fim >= ini){
+      kmResultadoBox.style.display = 'block';
+      const bruto = fim - ini;
+      const liquido = Math.max(0, bruto - desconto);
+      if(desconto > 0){
+        kmBrutoRow.style.display = 'flex';
+        kmBrutoVal.textContent = bruto.toLocaleString('pt-BR') + ' km';
+      } else {
+        kmBrutoRow.style.display = 'none';
+      }
+      kmResultadoVal.textContent = liquido.toLocaleString('pt-BR') + ' km';
+    } else {
+      kmResultadoBox.style.display = 'none';
+    }
+  }
+
+  kmInherEdit.addEventListener('click', function(){
+    kmInicialManualMode = true;
+    kmInicialReadonlyField.style.display = 'none';
+    kmInicialInputField.style.display = 'block';
+    kmInicialInput.value = kmDia.inicial != null ? kmDia.inicial : '';
+    updateKmResultado();
+  });
+
+  function abrirKmScreen(){
+    kmFinalInput.value = kmDia.final != null ? kmDia.final : '';
+    kmDescontoInput.value = kmDia.desconto ? kmDia.desconto : '';
+    const herdado = kmDia.inicial != null;
+    kmInicialManualMode = !herdado;
+    if(herdado){
+      kmInherLbl.textContent = 'Herdado do dia anterior';
+      kmInherVal.textContent = kmDia.inicial;
+      kmInicialReadonlyField.style.display = 'block';
+      kmInicialInputField.style.display = 'none';
+    } else {
+      kmInicialReadonlyField.style.display = 'none';
+      kmInicialInputField.style.display = 'block';
+      kmInicialInput.value = '';
+    }
+    updateKmResultado();
+    goTo('km');
+  }
+  document.getElementById('open-km-menu-btn').addEventListener('click', abrirKmScreen);
+
+  saveKmBtn.addEventListener('click', async function(){
+    saveKmBtn.disabled = true;
+    saveKmBtn.textContent = 'Salvando…';
+    const ini = kmInicialAtual();
+    const fim = kmFinalInput.value ? parseInt(kmFinalInput.value, 10) : null;
+    const desconto = kmDescontoInput.value ? parseInt(kmDescontoInput.value, 10) : 0;
+    const hoje = todayStr();
+    kmDiasMap[hoje] = { inicial: isNaN(ini) ? null : ini, final: fim, desconto: desconto };
+    const ok = await persistAll();
+    saveKmBtn.disabled = false;
+    saveKmBtn.textContent = 'Salvar quilometragem';
+    if(ok){
+      montarKmDia();
+      updateCorridaLock();
+      showToast('Quilometragem salva ✓');
+      goTo('menu');
+    } else {
+      showToast('Não deu pra salvar, tenta de novo');
+    }
+  });
+
+  // ===== PARAMS SCREEN =====
+  const taxaCreditoInput = document.getElementById('taxa-credito-input');
+  const taxaDebitoInput = document.getElementById('taxa-debito-input');
+  function sanitizePercentInput(input){
+    input.addEventListener('input', function(){
+      let v = input.value.replace(',', '.').replace(/[^0-9.]/g,'');
+      const parts = v.split('.');
+      if(parts.length>2) v = parts[0]+'.'+parts.slice(1).join('');
+      input.value = v;
+    });
+  }
+  sanitizePercentInput(taxaCreditoInput);
+  sanitizePercentInput(taxaDebitoInput);
+
+  document.getElementById('save-params-btn').addEventListener('click', async function(){
+    settings.taxaCredito = parseFloat(taxaCreditoInput.value.replace(',','.')) || 0;
+    settings.taxaDebito = parseFloat(taxaDebitoInput.value.replace(',','.')) || 0;
+    const ok = await persistAll();
+    if(ok){
+      showToast('Parâmetros salvos ✓');
+      updateBolso();
+      goTo('menu');
+    } else {
+      showToast('Não deu pra salvar, tenta de novo');
+    }
+  });
+
+  // ===== RELATORIOS / JSON DO DIA (folha de caderno) =====
+  function buildDiaJSON(dataStr){
+    const alvo = dataStr || todayStr();
+    const corridasDoDia = corridas.filter(e => localDateStr(e.dataHora) === alvo)
+      .sort((a,b) => a.dataHora.localeCompare(b.dataHora));
+    const despesasDoDia = despesas.filter(e => localDateStr(e.dataHora) === alvo)
+      .sort((a,b) => a.dataHora.localeCompare(b.dataHora));
+    const km = kmDiasMap[alvo] || { inicial: (alvo === todayStr() ? kmDia.inicial : null), final: null };
+
+    const horaFmt = iso => new Date(iso).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+
+    return {
+      data: alvo,
+      km: {
+        inicial: km.inicial != null ? km.inicial : null,
+        final: km.final != null ? km.final : null,
+        rodado: (km.inicial != null && km.final != null) ? (km.final - km.inicial) : null
+      },
+      corridas: corridasDoDia.map(e => ({
+        id: e.id,
+        hora: horaFmt(e.dataHora),
+        plataforma: e.plataforma,
+        valor: e.valor,
+        formaPagamento: e.formaPagamento,
+        tipoCartao: e.tipoCartao || null,
+        taxaAplicada: e.taxaAplicada || 0,
+        taxaAppValor: e.taxaAppValor || 0,
+        bolso: e.bolso,
+        observacao: e.observacao || ''
+      })),
+      despesas: despesasDoDia.map(e => ({
+        hora: horaFmt(e.dataHora),
+        tipo: e.tipo || 'geral',
+        descricao: e.descricao,
+        km: e.km || 0,
+        litros: e.litros || 0,
+        valor: e.valor
+      })),
+      totais: {
+        totalCorridas: corridasDoDia.reduce((s,e)=>s+e.valor,0),
+        totalBolso: corridasDoDia.reduce((s,e)=>s+e.bolso,0),
+        totalDespesas: despesasDoDia.reduce((s,e)=>s+e.valor,0),
+        totalTaxaApp: corridasDoDia.reduce((s,e)=>s+(e.taxaAppValor||0),0),
+        saldoLiquido: corridasDoDia.reduce((s,e)=>s+e.bolso,0) - despesasDoDia.reduce((s,e)=>s+e.valor,0),
+        porRecebimento: (function(){
+          const somaBolso = (filtroFn) => corridasDoDia.filter(filtroFn).reduce((s,e)=>s+e.bolso,0);
+          const somaValor = (filtroFn) => corridasDoDia.filter(filtroFn).reduce((s,e)=>s+e.valor,0);
+          const part = {
+            dinheiro: somaBolso(e => e.plataforma === 'Particular' && e.formaPagamento === 'Dinheiro'),
+            pix: somaBolso(e => e.plataforma === 'Particular' && e.formaPagamento === 'Pix'),
+            cartao: somaBolso(e => e.plataforma === 'Particular' && e.formaPagamento === 'Cartão')
+          };
+          const plataformas = {};
+          let totalNoApp = 0;
+          ['Uber','99','InDrive'].forEach(p => {
+            // Dinheiro/Pix aqui usam o valor CHEIO da corrida: é esse valor que
+            // realmente entrou em espécie/Pix. A taxa do app é descontada à parte
+            // (ver "Taxa do app"), não deste valor recebido.
+            const detalhe = {
+              noApp: somaBolso(e => e.plataforma === p && e.formaPagamento === 'No app'),
+              dinheiro: somaValor(e => e.plataforma === p && e.formaPagamento === 'Dinheiro'),
+              pix: somaValor(e => e.plataforma === p && e.formaPagamento === 'Pix'),
+              cartao: somaBolso(e => e.plataforma === p && e.formaPagamento === 'Cartão'),
+              total: 0
+            };
+            detalhe.total = detalhe.noApp + detalhe.dinheiro + detalhe.pix + detalhe.cartao;
+            plataformas[p] = detalhe;
+            totalNoApp += detalhe.total;
+          });
+          return { part, plataformas, totalNoApp };
+        })(),
+        taxaAppPorPlataforma: {
+          Uber: corridasDoDia.filter(e=>e.plataforma==='Uber').reduce((s,e)=>s+(e.taxaAppValor||0),0),
+          '99': corridasDoDia.filter(e=>e.plataforma==='99').reduce((s,e)=>s+(e.taxaAppValor||0),0),
+          InDrive: corridasDoDia.filter(e=>e.plataforma==='InDrive').reduce((s,e)=>s+(e.taxaAppValor||0),0)
+        }
+      }
+    };
+  }
+
+  let relatorioData = todayStr();
+
+  function formatarDataRelatorio(dataStr){
+    const d = new Date(dataStr + 'T00:00:00');
+    if(dataStr === todayStr()) return 'Hoje, ' + dateFmt.format(d);
+    return dateFmt.format(d);
+  }
+
+  function renderReports(){
+    const dia = buildDiaJSON(relatorioData);
+    const sheet = document.getElementById('notebook-sheet');
+    const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    let html = '';
+
+    document.getElementById('report-date-text').textContent = formatarDataRelatorio(relatorioData);
+    document.getElementById('report-date-input').value = relatorioData;
+
+    html += '<div class="notebook-date">' + formatarDataRelatorio(relatorioData) + '</div>';
+
+    html += '<div class="notebook-section-title">Km</div>';
+    if(dia.km.inicial != null || dia.km.final != null){
+      html += '<div class="notebook-row"><span class="nb-main">Inicial ' + (dia.km.inicial ?? '—') + ' · Final ' + (dia.km.final ?? '—') + '</span><span class="nb-val">' + (dia.km.rodado != null ? dia.km.rodado + ' km' : '—') + '</span></div>';
+    } else {
+      html += '<div class="notebook-empty">Nada registrado nesse dia</div>';
+    }
+
+    html += '<div class="notebook-section-title">Corridas</div>';
+    if(dia.corridas.length === 0){
+      html += '<div class="notebook-empty">Nenhuma corrida nesse dia</div>';
+    } else {
+      dia.corridas.forEach(c => {
+        const pag = c.formaPagamento === 'Cartão' ? (c.tipoCartao || 'Cartão') : c.formaPagamento;
+        const pendente = c.formaPagamento === 'A receber';
+        const valorMostrado = pendente ? c.valor : c.bolso;
+        const estiloPendente = pendente ? ' style="color:var(--text-dim);"' : '';
+        html += '<div class="notebook-row notebook-row-clickable" data-corrida-id="' + c.id + '"><span class="nb-main">' + c.hora + ' · ' + labelPlataforma(c.plataforma) + ' · ' + pag + '</span><span class="nb-val"' + estiloPendente + '>' + fmt(valorMostrado) + (pendente ? ' ⏳' : '') + '</span></div>';
+      });
+    }
+
+    html += '<div class="notebook-section-title">Despesas</div>';
+    if(dia.despesas.length === 0){
+      html += '<div class="notebook-empty">Nenhuma despesa nesse dia</div>';
+    } else {
+      dia.despesas.forEach(d => {
+        html += '<div class="notebook-row notebook-row-clickable" data-despesa-id="' + d.id + '"><span class="nb-main">' + d.hora + ' · ' + d.descricao + '</span><span class="nb-val">' + fmt(d.valor) + '</span></div>';
+      });
+    }
+
+    if(dia.corridas.length > 0){
+      html += '<div class="notebook-section-title">Totais por recebimento</div>';
+      const pr = dia.totais.porRecebimento;
+      if(pr.part.dinheiro > 0) html += '<div class="notebook-row"><span class="nb-main">Part Dinheiro</span><span class="nb-val">' + fmt(pr.part.dinheiro) + '</span></div>';
+      if(pr.part.pix > 0) html += '<div class="notebook-row"><span class="nb-main">Part Pix</span><span class="nb-val">' + fmt(pr.part.pix) + '</span></div>';
+      if(pr.part.cartao > 0) html += '<div class="notebook-row"><span class="nb-main">Part Cartão</span><span class="nb-val">' + fmt(pr.part.cartao) + '</span></div>';
+      ['Uber','99','InDrive'].forEach(p => {
+        const d = pr.plataformas[p];
+        if(d.dinheiro > 0) html += '<div class="notebook-row"><span class="nb-main">' + p + ' Dinheiro</span><span class="nb-val">' + fmt(d.dinheiro) + '</span></div>';
+        if(d.pix > 0) html += '<div class="notebook-row"><span class="nb-main">' + p + ' Pix</span><span class="nb-val">' + fmt(d.pix) + '</span></div>';
+        if(d.cartao > 0) html += '<div class="notebook-row"><span class="nb-main">' + p + ' Cartão</span><span class="nb-val">' + fmt(d.cartao) + '</span></div>';
+        if(d.noApp > 0) html += '<div class="notebook-row"><span class="nb-main">' + p + ' App</span><span class="nb-val">' + fmt(d.noApp) + '</span></div>';
+      });
+    }
+
+    html += '<div class="notebook-total"><span>Saldo líquido</span><span class="nb-total-val">' + fmt(dia.totais.saldoLiquido) + '</span></div>';
+    if(dia.totais.totalTaxaApp > 0){
+      const tap = dia.totais.taxaAppPorPlataforma;
+      html += '<div class="notebook-section-title" style="margin-top:10px;">Taxa do app</div>';
+      if(tap.Uber > 0) html += '<div class="notebook-row"><span class="nb-main">Uber</span><span class="nb-val">' + fmt(tap.Uber) + '</span></div>';
+      if(tap['99'] > 0) html += '<div class="notebook-row"><span class="nb-main">99</span><span class="nb-val">' + fmt(tap['99']) + '</span></div>';
+      if(tap.InDrive > 0) html += '<div class="notebook-row"><span class="nb-main">InDrive</span><span class="nb-val">' + fmt(tap.InDrive) + '</span></div>';
+      html += '<div class="notebook-row" style="padding-left:0;margin-top:4px;"><span class="nb-main">Total taxa do app</span><span class="nb-val">' + fmt(dia.totais.totalTaxaApp) + '</span></div>';
+    }
+
+    sheet.innerHTML = html;
+
+    sheet.querySelectorAll('.notebook-row-clickable').forEach(row=>{
+      row.addEventListener('click', function(){
+        if(row.dataset.corridaId){
+          const entry = corridas.find(c => c.id === row.dataset.corridaId);
+          if(entry) abrirCorridaParaEdicao(entry, 'reports');
+        } else if(row.dataset.despesaId){
+          const entry = despesas.find(d => d.id === row.dataset.despesaId);
+          if(!entry) return;
+          if(entry.tipo === 'combustivel') abrirDespesaParaEdicao(entry, 'reports');
+          else abrirDespesaGeralParaEdicao(entry, 'reports');
+        }
+      });
+    });
+  }
+
+  const NOMES_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  function diasNoMes(ano, mes){
+    return new Date(ano, mes, 0).getDate();
+  }
+
+  function horasTrabalhadasDia(dataStr){
+    const doDia = corridas.filter(c => localDateStr(c.dataHora) === dataStr)
+      .map(c => new Date(c.dataHora).getTime()).sort((a,b) => a-b);
+    if(doDia.length < 2) return null;
+    return (doDia[doDia.length-1] - doDia[0]) / 3600000;
+  }
+
+  function mediaHorasTrabalhadasMes(ano, mes){
+    // Antes de setembro/2026 não tínhamos o horário de cada corrida registrado
+    // de forma confiável, então usamos uma média fixa de 9h30 por dia.
+    if(ano < 2026 || (ano === 2026 && mes < 9)) return 9.5;
+    const datasComCorridas = new Set(
+      corridas.filter(c => { const d = new Date(c.dataHora); return d.getFullYear() === ano && (d.getMonth()+1) === mes; })
+              .map(c => localDateStr(c.dataHora))
+    );
+    let soma = 0, count = 0;
+    datasComCorridas.forEach(ds => {
+      const h = horasTrabalhadasDia(ds);
+      if(h != null){ soma += h; count++; }
+    });
+    return count > 0 ? (soma / count) : 9.5;
+  }
+
+  function computeMonthStats(ano, mes){
+    const prefix = ano + '-' + String(mes).padStart(2,'0');
+    const dentroDoMes = (dataHora) => {
+      const d = new Date(dataHora);
+      return d.getFullYear() === ano && (d.getMonth()+1) === mes;
+    };
+    const corridasMes = corridas.filter(c => dentroDoMes(c.dataHora));
+    const despesasMes = despesas.filter(d => dentroDoMes(d.dataHora));
+    const combustivelMes = despesasMes.filter(d => d.tipo === 'combustivel');
+    const despesaGeralMes = despesasMes.filter(d => d.tipo !== 'combustivel').reduce((s,d)=>s+d.valor,0);
+
+    const ganho = corridasMes.reduce((s,c)=>s+c.bolso,0);
+    const viagens = corridasMes.length;
+    const litros = combustivelMes.reduce((s,d)=>s+(d.litros||0),0);
+    const valorCombustivel = combustivelMes.reduce((s,d)=>s+d.valor,0);
+
+    let kmBruto = 0, kmLiquido = 0, temKm = false;
+    Object.keys(kmDiasMap).forEach(dia => {
+      if(dia.indexOf(prefix) === 0){
+        const k = kmDiasMap[dia];
+        if(k.inicial != null && k.final != null){
+          const bruto = k.final - k.inicial;
+          kmBruto += bruto;
+          kmLiquido += Math.max(0, bruto - (k.desconto || 0));
+          temKm = true;
+        }
+      }
+    });
+
+    const bolso = ganho - valorCombustivel;
+    const porDia = bolso / diasNoMes(ano, mes);
+    return {
+      ano, mes, ganho, kmBruto, kmLiquido, temKm, viagens, litros, valorCombustivel, despesaGeralMes,
+      mediaRsKm: kmLiquido > 0 ? ganho / kmLiquido : 0,
+      mediaKmLitro: litros > 0 ? kmBruto / litros : 0,
+      precoLitro: litros > 0 ? valorCombustivel / litros : 0,
+      bolso,
+      porDia,
+      horaValor: porDia / mediaHorasTrabalhadasMes(ano, mes),
+      temDados: corridasMes.length > 0 || despesasMes.length > 0 || temKm
+    };
+  }
+
+  function renderStatsMensal(){
+    const chaves = new Set();
+    corridas.forEach(c => { const d = new Date(c.dataHora); chaves.add(d.getFullYear()+'-'+(d.getMonth()+1)); });
+    despesas.forEach(d => { const dt = new Date(d.dataHora); chaves.add(dt.getFullYear()+'-'+(dt.getMonth()+1)); });
+    Object.keys(kmDiasMap).forEach(dia => { const [a,m] = dia.split('-'); chaves.add(parseInt(a,10)+'-'+parseInt(m,10)); });
+
+    const hoje = new Date();
+    chaves.add(hoje.getFullYear()+'-'+(hoje.getMonth()+1));
+
+    const meses = Array.from(chaves).map(k => {
+      const [a,m] = k.split('-').map(Number);
+      return { ano:a, mes:m };
+    }).filter(({ano,mes}) => computeMonthStats(ano,mes).temDados)
+      .sort((x,y) => (x.ano - y.ano) || (x.mes - y.mes));
+
+    const fmt2 = v => v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const hojeYM = hoje.getFullYear()+'-'+(hoje.getMonth()+1);
+
+    let html = '<div class="stats-table-wrap"><table class="stats-table"><thead><tr>' +
+      '<th>Data</th><th>Valor em $</th><th>KM</th><th>KM -</th><th>Média</th><th>Viagens</th>' +
+      '<th>Litros</th><th>Média litro</th><th>Valor</th><th>Por litro</th><th>Bolso</th><th>Por dia</th><th>Hora</th>' +
+      '</tr></thead><tbody class="mensal">';
+
+    meses.forEach(({ano,mes}) => {
+      const s = computeMonthStats(ano, mes);
+      const emAndamento = (ano+'-'+mes) === hojeYM;
+      const nomeMes = NOMES_MESES[mes-1].slice(0,3).toUpperCase() + (emAndamento ? ' *' : '');
+      html += '<tr><td>' + nomeMes + '</td><td>' + fmt2(s.ganho) + '</td><td>' + s.kmBruto.toLocaleString('pt-BR') +
+        '</td><td>' + s.kmLiquido.toLocaleString('pt-BR') + '</td><td class="hl">' + fmt2(s.mediaRsKm) + '</td><td>' + s.viagens +
+        '</td><td>' + fmt2(s.litros) + '</td><td class="hl">' + fmt2(s.mediaKmLitro) + '</td><td>' + fmt2(s.valorCombustivel) +
+        '</td><td>' + fmt2(s.precoLitro) + '</td><td>' + fmt2(s.bolso) + '</td><td>' + fmt2(s.porDia) + '</td><td>' + fmt2(s.horaValor) + '</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    if(meses.some(({ano,mes}) => (ano+'-'+mes) === hojeYM)){
+      html += '<div class="hint" style="margin-top:4px;">* mês em andamento, ainda somando</div>';
+    }
+
+    document.getElementById('stats-mensal-list').innerHTML = html;
+  }
+
+  function computeDayStats(dataStr){
+    const corridasDia = corridas.filter(c => localDateStr(c.dataHora) === dataStr);
+    const despesasDia = despesas.filter(d => localDateStr(d.dataHora) === dataStr);
+    const combustivelDia = despesasDia.filter(d => d.tipo === 'combustivel');
+    const ganho = corridasDia.reduce((s,c)=>s+c.bolso,0);
+    const viagens = corridasDia.length;
+    const litros = combustivelDia.reduce((s,d)=>s+(d.litros||0),0);
+    const valorCombustivel = combustivelDia.reduce((s,d)=>s+d.valor,0);
+    const k = kmDiasMap[dataStr];
+    let kmBruto = 0, kmLiquido = 0, temKm = false;
+    if(k && k.inicial != null && k.final != null){
+      kmBruto = k.final - k.inicial;
+      kmLiquido = Math.max(0, kmBruto - (k.desconto || 0));
+      temKm = true;
+    }
+    return {
+      dataStr, ganho, viagens, litros, valorCombustivel, kmBruto, kmLiquido,
+      mediaRsKm: kmLiquido > 0 ? ganho / kmLiquido : 0,
+      mediaKmLitro: litros > 0 ? kmBruto / litros : 0,
+      precoLitro: litros > 0 ? valorCombustivel / litros : 0,
+      temDados: corridasDia.length > 0 || despesasDia.length > 0 || temKm
+    };
+  }
+
+  function renderStatsDiario(){
+    const datas = new Set();
+    corridas.forEach(c => datas.add(localDateStr(c.dataHora)));
+    despesas.forEach(d => datas.add(localDateStr(d.dataHora)));
+    Object.keys(kmDiasMap).forEach(d => datas.add(d));
+    datas.add(todayStr());
+
+    const porMes = {};
+    Array.from(datas).sort().forEach(ds => {
+      const s = computeDayStats(ds);
+      if(!s.temDados) return;
+      const chaveMes = ds.slice(0,7);
+      (porMes[chaveMes] = porMes[chaveMes] || []).push(s);
+    });
+
+    const fmt2 = v => v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const fmtData = ds => {
+      const d = new Date(ds+'T00:00:00');
+      return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+    };
+
+    let html = '';
+    Object.keys(porMes).sort().forEach(chaveMes => {
+      const [ano, mes] = chaveMes.split('-').map(Number);
+      html += '<div class="list-section-title" style="margin-top:14px;">' + NOMES_MESES[mes-1] + '</div>';
+      html += '<div class="stats-table-wrap"><table class="stats-table"><thead><tr>' +
+        '<th>Data</th><th>Valor em $</th><th>KM</th><th>KM -</th><th>Média</th><th>Viagens</th>' +
+        '<th>Litros</th><th>Média litro</th><th>Valor</th><th>Por litro</th></tr></thead><tbody class="diario">';
+      porMes[chaveMes].forEach(s => {
+        html += '<tr><td>' + fmtData(s.dataStr) + '</td><td>' + fmt2(s.ganho) + '</td><td>' + s.kmBruto.toLocaleString('pt-BR') +
+          '</td><td>' + s.kmLiquido.toLocaleString('pt-BR') + '</td><td>' + fmt2(s.mediaRsKm) + '</td><td>' + s.viagens +
+          '</td><td>' + fmt2(s.litros) + '</td><td>' + fmt2(s.mediaKmLitro) + '</td><td>' + fmt2(s.valorCombustivel) +
+          '</td><td>' + fmt2(s.precoLitro) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    });
+    document.getElementById('stats-diario-list').innerHTML = html;
+  }
+
+  document.getElementById('open-stats-btn').addEventListener('click', renderStatsDiario);
+  document.getElementById('open-fechamento-mensal-btn').addEventListener('click', function(){
+    renderStatsMensal();
+    goTo('fechamentoMensal');
+  });
+
+  const PLATAFORMAS_RESUMO = ['Particular','Uber','99','InDrive'];
+  const METODOS_RESUMO = [
+    {key:'Dinheiro', label:'Dinheiro'},
+    {key:'Pix', label:'Pix'},
+    {key:'Cartão', label:'Cartão'},
+    {key:'No app', label:'App'}
+  ];
+
+  let resumoData = todayStr();
+
+  function computeResumoDia(dataStr){
+    const corridasDoDia = corridas.filter(c => localDateStr(c.dataHora) === dataStr);
+
+    const matriz = {};
+    METODOS_RESUMO.forEach(m => {
+      matriz[m.key] = {};
+      PLATAFORMAS_RESUMO.forEach(p => {
+        matriz[m.key][p] = corridasDoDia
+          .filter(c => c.plataforma === p && c.formaPagamento === m.key)
+          .reduce((s,c) => s + c.bolso, 0);
+      });
+    });
+
+    const totalPorPlataforma = {};
+    PLATAFORMAS_RESUMO.forEach(p => {
+      totalPorPlataforma[p] = METODOS_RESUMO.reduce((s,m) => s + matriz[m.key][p], 0);
+    });
+    const totalPorMetodo = {};
+    METODOS_RESUMO.forEach(m => {
+      totalPorMetodo[m.key] = PLATAFORMAS_RESUMO.reduce((s,p) => s + matriz[m.key][p], 0);
+    });
+    const totalGeral = PLATAFORMAS_RESUMO.reduce((s,p) => s + totalPorPlataforma[p], 0);
+
+    const despesasDoDia = despesas.filter(d => localDateStr(d.dataHora) === dataStr);
+    const combustivelDoDia = despesasDoDia.filter(d => d.tipo === 'combustivel');
+    const despesaGeralDoDia = despesasDoDia.filter(d => d.tipo !== 'combustivel').reduce((s,d) => s + d.valor, 0);
+    const valorCombDoDia = combustivelDoDia.reduce((s,d) => s + d.valor, 0);
+
+    const k = kmDiasMap[dataStr];
+    const kmRodadoDoDia = (k && k.inicial != null && k.final != null) ? (k.final - k.inicial) : 0;
+
+    // "A receber" é sempre o total pendente atual (não filtrado por dia), já que
+    // representa o que ainda falta receber até hoje, independente de quando rolou.
+    const aReceberTotal = recebiveis.filter(r => r.status === 'pendente').reduce((s,r) => s + r.valor, 0);
+
+    return { matriz, totalPorPlataforma, totalPorMetodo, totalGeral, despesaGeralDoDia, valorCombDoDia, kmRodadoDoDia, aReceberTotal };
+  }
+
+  function renderResumo(){
+    document.getElementById('resumo-date-text').textContent = formatarDataRelatorio(resumoData);
+    document.getElementById('resumo-date-input').value = resumoData;
+
+    const r = computeResumoDia(resumoData);
+    const fmt = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    const tbody = document.querySelector('#resumo-matriz tbody');
+    let html = '';
+    METODOS_RESUMO.forEach(m => {
+      html += '<tr><td>' + m.label + '</td>';
+      PLATAFORMAS_RESUMO.forEach(p => {
+        html += '<td>' + fmt(r.matriz[m.key][p]) + '</td>';
+      });
+      html += '<td class="hl">' + fmt(r.totalPorMetodo[m.key]) + '</td></tr>';
+    });
+    html += '<tr class="mensal"><td>Total</td>';
+    PLATAFORMAS_RESUMO.forEach(p => {
+      html += '<td>' + fmt(r.totalPorPlataforma[p]) + '</td>';
+    });
+    html += '<td class="hl">' + fmt(r.totalGeral) + '</td></tr>';
+    tbody.innerHTML = html;
+
+    document.getElementById('resumo-a-receber').textContent = fmt(r.aReceberTotal);
+    document.getElementById('resumo-comb').textContent = fmt(r.valorCombDoDia);
+    document.getElementById('resumo-km').textContent = r.kmRodadoDoDia.toLocaleString('pt-BR') + ' km';
+    document.getElementById('resumo-despesa').textContent = fmt(r.despesaGeralDoDia);
+  }
+
+  document.getElementById('open-resumo-btn').addEventListener('click', function(){
+    resumoData = todayStr();
+    renderResumo();
+    goTo('resumo');
+  });
+  document.getElementById('resumo-prev-day').addEventListener('click', function(){
+    resumoData = somarDias(resumoData, -1);
+    renderResumo();
+  });
+  document.getElementById('resumo-next-day').addEventListener('click', function(){
+    resumoData = somarDias(resumoData, 1);
+    renderResumo();
+  });
+  document.getElementById('resumo-date-input').addEventListener('change', function(e){
+    if(e.target.value){
+      resumoData = e.target.value;
+      renderResumo();
+    }
+  });
+
+
+  function somarDias(dataStr, n){
+    const d = new Date(dataStr + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  document.getElementById('report-prev-day').addEventListener('click', function(){
+    relatorioData = somarDias(relatorioData, -1);
+    renderReports();
+  });
+  document.getElementById('report-next-day').addEventListener('click', function(){
+    relatorioData = somarDias(relatorioData, 1);
+    renderReports();
+  });
+  document.getElementById('report-date-input').addEventListener('change', function(e){
+    if(e.target.value){
+      relatorioData = e.target.value;
+      renderReports();
+    }
+  });
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
