@@ -848,6 +848,21 @@
       <div class="hint" style="text-align:left;margin-top:8px;">Se rodou por fora do trabalho (uso pessoal), coloca aqui quantos km — esses não entram na conta</div>
     </div>
 
+    <div class="field">
+      <label>Horário de trabalho (opcional)</label>
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1;">
+          <label for="km-hora-inicio-input" style="font-size:11px; color:var(--text-dim);">Início</label>
+          <input class="text-input" id="km-hora-inicio-input" type="time">
+        </div>
+        <div style="flex:1;">
+          <label for="km-hora-fim-input" style="font-size:11px; color:var(--text-dim);">Fim</label>
+          <input class="text-input" id="km-hora-fim-input" type="time">
+        </div>
+      </div>
+      <div class="hint" style="text-align:left;margin-top:8px;">Preenche uma vez por dia pra calcular o ganho por hora certinho no Fechamento. Se deixar em branco, o app usa uma média fixa.</div>
+    </div>
+
     <div class="bolso-box" id="km-resultado-box" style="display:none;">
       <div class="row" id="km-bruto-row"><span>Rodado bruto</span><span id="km-bruto-val">0 km</span></div>
       <div class="row total"><span>Líquido (trabalho)</span><span id="km-resultado-val">0 km</span></div>
@@ -953,6 +968,17 @@ try{
     const d = new Date(iso);
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
+
+  function horaAtualHHMM(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function horaLocalHHMM(iso){
+    const d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
 
   function labelPlataforma(p){
     return p === 'Particular' ? 'Part' : p;
@@ -1544,6 +1570,7 @@ try{
           corridaId = corridaOriginal.id;
           corridas[idxOriginal] = {
             ...corridaOriginal,
+            dataHora: horaCorridaRecebivel,
             plataforma: selectedPlataforma,
             valor: valor,
             formaPagamento: 'A receber',
@@ -1620,6 +1647,7 @@ try{
       const original = corridas[idx];
       const atualizada = {
         ...original,
+        dataHora: original.dataHora,
         plataforma: selectedPlataforma,
         valor: valor,
         formaPagamento: selectedPagamento,
@@ -2139,6 +2167,8 @@ try{
   const kmInicialInput = document.getElementById('km-inicial-input');
   const kmFinalInput = document.getElementById('km-final-input');
   const kmDescontoInput = document.getElementById('km-desconto-input');
+  const kmHoraInicioInput = document.getElementById('km-hora-inicio-input');
+  const kmHoraFimInput = document.getElementById('km-hora-fim-input');
   const kmBrutoRow = document.getElementById('km-bruto-row');
   const kmBrutoVal = document.getElementById('km-bruto-val');
   const kmResultadoBox = document.getElementById('km-resultado-box');
@@ -2194,6 +2224,9 @@ try{
   function abrirKmScreen(){
     kmFinalInput.value = kmDia.final != null ? kmDia.final : '';
     kmDescontoInput.value = kmDia.desconto ? kmDia.desconto : '';
+    const hojeKm = kmDiasMap[todayStr()] || {};
+    kmHoraInicioInput.value = hojeKm.horaInicio || '';
+    kmHoraFimInput.value = hojeKm.horaFim || '';
     const herdado = kmDia.inicial != null;
     kmInicialManualMode = !herdado;
     if(herdado){
@@ -2218,7 +2251,13 @@ try{
     const fim = kmFinalInput.value ? parseInt(kmFinalInput.value, 10) : null;
     const desconto = kmDescontoInput.value ? parseInt(kmDescontoInput.value, 10) : 0;
     const hoje = todayStr();
-    kmDiasMap[hoje] = { inicial: isNaN(ini) ? null : ini, final: fim, desconto: desconto };
+    kmDiasMap[hoje] = {
+      inicial: isNaN(ini) ? null : ini,
+      final: fim,
+      desconto: desconto,
+      horaInicio: kmHoraInicioInput.value || null,
+      horaFim: kmHoraFimInput.value || null
+    };
     const ok = await persistAll();
     saveKmBtn.disabled = false;
     saveKmBtn.textContent = 'Salvar quilometragem';
@@ -2436,6 +2475,14 @@ try{
   }
 
   function horasTrabalhadasDia(dataStr){
+    const k = kmDiasMap[dataStr];
+    if(k && k.horaInicio && k.horaFim){
+      const [hi, mi] = k.horaInicio.split(':').map(Number);
+      const [hf, mf] = k.horaFim.split(':').map(Number);
+      let minutos = (hf*60 + mf) - (hi*60 + mi);
+      if(minutos < 0) minutos += 24*60; // virou a noite
+      return minutos / 60;
+    }
     const doDia = corridas.filter(c => localDateStr(c.dataHora) === dataStr)
       .map(c => new Date(c.dataHora).getTime()).sort((a,b) => a-b);
     if(doDia.length < 2) return null;
