@@ -605,6 +605,7 @@
     </div>
     <div class="notebook-section-title" style="margin-left:0;">Pendentes</div>
     <div id="receber-pendentes-list"></div>
+    <div id="receber-total-pendente" class="notebook-total" style="display:none; margin:4px 0 18px;"></div>
     <div class="notebook-section-title" style="margin-left:0;">Recebidos recentemente</div>
     <div id="receber-pagos-list"></div>
   </div>
@@ -2021,6 +2022,7 @@ try{
 
     if(pendentes.length === 0){
       pendList.innerHTML = '<div class="receber-empty">Ninguém te devendo no momento 🎉</div>';
+      document.getElementById('receber-total-pendente').style.display = 'none';
     } else {
       pendList.innerHTML = pendentes.map(r => {
         const nome = (r.nomePassageiro || '').trim();
@@ -2036,6 +2038,10 @@ try{
         </div>
       `;
       }).join('');
+      const totalPendente = pendentes.reduce((s,r) => s + (r.valor || 0), 0);
+      const totalBox = document.getElementById('receber-total-pendente');
+      totalBox.style.display = 'flex';
+      totalBox.innerHTML = '<span>Total a receber</span><span class="nb-total-val">' + fmt(totalPendente) + '</span>';
     }
 
     if(pagos.length === 0){
