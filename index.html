@@ -2360,6 +2360,7 @@ try{
         observacao: e.observacao || ''
       })),
       despesas: despesasDoDia.map(e => ({
+        id: e.id,
         hora: horaFmt(e.dataHora),
         tipo: e.tipo || 'geral',
         descricao: e.descricao,
