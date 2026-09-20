@@ -2635,11 +2635,15 @@ try{
       kmLiquido = Math.max(0, kmBruto - (k.desconto || 0));
       temKm = true;
     }
+    const bolso = ganho - valorCombustivel;
+    const horasDia = horasTrabalhadasDia(dataStr);
     return {
-      dataStr, ganho, viagens, litros, valorCombustivel, kmBruto, kmLiquido,
+      dataStr, ganho, viagens, litros, valorCombustivel, kmBruto, kmLiquido, bolso,
       mediaRsKm: kmLiquido > 0 ? ganho / kmLiquido : 0,
       mediaKmLitro: litros > 0 ? kmBruto / litros : 0,
       precoLitro: litros > 0 ? valorCombustivel / litros : 0,
+      porDia: bolso,
+      horaValor: (horasDia != null && horasDia > 0) ? (bolso / horasDia) : null,
       temDados: corridasDia.length > 0 || despesasDia.length > 0 || temKm
     };
   }
@@ -2671,19 +2675,19 @@ try{
       html += '<div class="list-section-title" style="margin-top:14px;">' + NOMES_MESES[mes-1] + '</div>';
       html += '<div class="stats-table-wrap"><table class="stats-table"><thead><tr>' +
         '<th>Data</th><th>Valor em $</th><th>KM</th><th>KM -</th><th>Média</th><th>Viagens</th>' +
-        '<th>Litros</th><th>Média litro</th><th>Valor</th><th>Por litro</th></tr></thead><tbody class="diario">';
+        '<th>Litros</th><th>Média litro</th><th>Valor</th><th>Por litro</th><th>Bolso</th><th>Por dia</th><th>Hora</th></tr></thead><tbody class="diario">';
       porMes[chaveMes].forEach(s => {
         const classe = s.ganho > 290 ? 'acima' : 'abaixo';
         html += '<tr class="' + classe + '"><td>' + fmtData(s.dataStr) + '</td><td>' + fmt2(s.ganho) + '</td><td>' + s.kmBruto.toLocaleString('pt-BR') +
           '</td><td>' + s.kmLiquido.toLocaleString('pt-BR') + '</td><td>' + fmt2(s.mediaRsKm) + '</td><td>' + s.viagens +
           '</td><td>' + fmt2(s.litros) + '</td><td>' + fmt2(s.mediaKmLitro) + '</td><td>' + fmt2(s.valorCombustivel) +
-          '</td><td>' + fmt2(s.precoLitro) + '</td></tr>';
+          '</td><td>' + fmt2(s.precoLitro) + '</td><td>' + fmt2(s.bolso) + '</td><td>' + fmt2(s.porDia) + '</td><td>' + (s.horaValor != null ? fmt2(s.horaValor) : '—') + '</td></tr>';
       });
       const mm = computeMonthStats(ano, mes);
       html += '<tr class="total-mes"><td>' + NOMES_MESES[mes-1].slice(0,3).toUpperCase() + '</td><td>' + fmt2(mm.ganho) + '</td><td>' + mm.kmBruto.toLocaleString('pt-BR') +
         '</td><td>' + mm.kmLiquido.toLocaleString('pt-BR') + '</td><td>' + fmt2(mm.mediaRsKm) + '</td><td>' + mm.viagens +
         '</td><td>' + fmt2(mm.litros) + '</td><td>' + fmt2(mm.mediaKmLitro) + '</td><td>' + fmt2(mm.valorCombustivel) +
-        '</td><td>' + fmt2(mm.precoLitro) + '</td></tr>';
+        '</td><td>' + fmt2(mm.precoLitro) + '</td><td>' + fmt2(mm.bolso) + '</td><td>' + fmt2(mm.porDia) + '</td><td>' + fmt2(mm.horaValor) + '</td></tr>';
       html += '</tbody></table></div>';
     });
     document.getElementById('stats-diario-list').innerHTML = html;
