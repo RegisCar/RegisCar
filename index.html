@@ -2436,6 +2436,17 @@ try{
       html += '<div class="notebook-empty">Nada registrado nesse dia</div>';
     }
 
+    const kHora = kmDiasMap[relatorioData] || {};
+    html += '<div class="notebook-row" style="flex-direction:column; align-items:stretch; gap:8px; padding:10px 0;">';
+    html += '<span class="nb-main" style="font-weight:700;">Horário de trabalho (pra calcular R$/hora)</span>';
+    html += '<div style="display:flex; gap:10px; align-items:center;">';
+    html += '<input type="time" id="report-hora-inicio-input" class="text-input" style="flex:1;" value="' + (kHora.horaInicio || '') + '">';
+    html += '<span style="color:var(--text-dim);">até</span>';
+    html += '<input type="time" id="report-hora-fim-input" class="text-input" style="flex:1;" value="' + (kHora.horaFim || '') + '">';
+    html += '</div>';
+    html += '<button class="export-btn" id="report-salvar-hora-btn" style="padding:9px;">Salvar horário desse dia</button>';
+    html += '</div>';
+
     html += '<div class="notebook-section-title">Corridas</div>';
     if(dia.corridas.length === 0){
       html += '<div class="notebook-empty">Nenhuma corrida nesse dia</div>';
@@ -2498,6 +2509,31 @@ try{
         }
       });
     });
+
+    const btnSalvarHora = document.getElementById('report-salvar-hora-btn');
+    if(btnSalvarHora){
+      btnSalvarHora.addEventListener('click', async function(){
+        const dataAlvo = relatorioData;
+        const hi = document.getElementById('report-hora-inicio-input').value;
+        const hf = document.getElementById('report-hora-fim-input').value;
+        btnSalvarHora.disabled = true;
+        btnSalvarHora.textContent = 'Salvando…';
+        const anterior = kmDiasMap[dataAlvo] ? {...kmDiasMap[dataAlvo]} : null;
+        kmDiasMap[dataAlvo] = Object.assign({inicial:null, final:null, desconto:0}, kmDiasMap[dataAlvo] || {}, {
+          horaInicio: hi || null,
+          horaFim: hf || null
+        });
+        const ok = await persistAll();
+        btnSalvarHora.disabled = false;
+        btnSalvarHora.textContent = 'Salvar horário desse dia';
+        if(ok){
+          showToast('Horário salvo ✓');
+        } else {
+          if(anterior) kmDiasMap[dataAlvo] = anterior; else delete kmDiasMap[dataAlvo];
+          showToast('Não deu pra salvar, tenta de novo');
+        }
+      });
+    }
   }
 
   const NOMES_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
