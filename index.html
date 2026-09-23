@@ -919,6 +919,11 @@
     </div>
 
     <button class="save-btn yellow" id="save-params-btn">Salvar parâmetros</button>
+
+    <div class="list-section-title" style="margin-top:28px;">Backup</div>
+    <div class="hint" style="text-align:left; margin-bottom:10px;">O app guarda uma cópia completa dos seus dados automaticamente, uma vez por dia, toda vez que você abre ele. Também dá pra forçar um backup agora, a qualquer momento.</div>
+    <div id="backup-status" class="hint" style="text-align:left; margin-bottom:10px;">Último backup: —</div>
+    <button class="export-btn" id="backup-agora-btn">Fazer backup agora</button>
   </div>
 
   <div style="text-align:center; padding:18px 0 6px; font-size:10.5px; color:var(--text-dim); opacity:0.6;">Copyright© 2026 RRM</div>
@@ -938,9 +943,11 @@ const firebaseConfig = {
   appId: "1:999785655653:web:78e5b85fdfeea22241c58c"
 };
 let fsDocRef = null;
+let fsBackupsCol = null;
 try{
   firebase.initializeApp(firebaseConfig);
   fsDocRef = firebase.firestore().collection('regiscar').doc('dados');
+  fsBackupsCol = firebase.firestore().collection('regiscar_backups');
 }catch(e){}
 
 (function(){
@@ -1062,7 +1069,23 @@ try{
   document.getElementById('gear-btn').addEventListener('click', ()=>{
     taxaCreditoInput.value = String(settings.taxaCredito).replace('.', ',');
     taxaDebitoInput.value = String(settings.taxaDebito).replace('.', ',');
+    atualizarStatusBackup();
     goTo('params');
+  });
+
+  document.getElementById('backup-agora-btn').addEventListener('click', async function(){
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Fazendo backup…';
+    const ok = await fazerBackup();
+    btn.disabled = false;
+    btn.textContent = 'Fazer backup agora';
+    if(ok){
+      localStorage.setItem('regiscar:ultimoBackupData', todayStr());
+      showToast('Backup feito ✓');
+    } else {
+      showToast('Não deu pra fazer o backup, tenta de novo');
+    }
   });
 
   function isSameDay(iso, ref){
@@ -1134,6 +1157,8 @@ try{
         });
       }
     }catch(err){}
+
+    tentarBackupAutomatico();
   }
 
   function updateReceberBadge(){
@@ -1201,6 +1226,46 @@ try{
       ok = true;
     }catch(err){}
     return ok;
+  }
+
+  // ===== BACKUP DIÁRIO =====
+  function atualizarStatusBackup(){
+    const el = document.getElementById('backup-status');
+    if(!el) return;
+    const guardado = localStorage.getItem('regiscar:ultimoBackup');
+    if(!guardado){
+      el.textContent = 'Último backup: ainda nenhum';
+      return;
+    }
+    const d = new Date(guardado);
+    el.textContent = 'Último backup: ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') +
+      ' às ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  async function fazerBackup(){
+    if(!fsBackupsCol) return false;
+    try{
+      const snapshot = {
+        corridas, despesas, recebiveis, settings,
+        kmDias: kmDiasMap,
+        backupEm: Date.now()
+      };
+      await fsBackupsCol.doc(todayStr()).set(snapshot);
+      localStorage.setItem('regiscar:ultimoBackup', new Date().toISOString());
+      atualizarStatusBackup();
+      return true;
+    }catch(err){
+      return false;
+    }
+  }
+
+  function tentarBackupAutomatico(){
+    const ultimo = localStorage.getItem('regiscar:ultimoBackupData');
+    const hoje = todayStr();
+    if(ultimo === hoje) { atualizarStatusBackup(); return; }
+    fazerBackup().then(ok => {
+      if(ok) localStorage.setItem('regiscar:ultimoBackupData', hoje);
+    });
   }
 
   // ===== CURRENCY MASK HELPER =====
