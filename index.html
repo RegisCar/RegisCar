@@ -282,6 +282,11 @@
   .receber-item.pago .receber-item-val{ color:var(--green); }
   .receber-item.pago .receber-item-icon{ color:var(--green); }
   .receber-empty{ color:var(--text-dim); font-size:13px; padding:6px 2px 16px; }
+  .receber-grupo-header{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 4px 4px; font-size:11.5px; font-weight:800; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:0.03em;
+  }
   .list-section-title{
     font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase;
     color:var(--text-dim); margin:18px 0 8px 2px;
@@ -748,6 +753,23 @@
           <div class="row" id="bolso-taxa-row"><span>Taxa do cartão</span><span id="bolso-taxa-val">—</span></div>
           <div class="row" id="transferir-row" style="display:none;"><span>Taxa do app</span><span id="transferir-val">—</span></div>
           <div class="row total"><span id="bolso-total-label">Vai pro bolso</span><span id="bolso-final-val">R$ 0,00</span></div>
+        </div>
+
+        <div class="field" id="parcial-field" style="display:none; margin-top:14px;">
+          <label class="chip-checkbox" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="parcial-checkbox" style="width:18px; height:18px;">
+            <span>Só recebi uma parte agora, o resto fica pra depois</span>
+          </label>
+          <div id="parcial-detalhes" style="display:none; margin-top:12px;">
+            <label for="parcial-valor-input">Quanto você recebeu agora</label>
+            <div class="valor-box">
+              <span class="prefix">R$</span>
+              <input id="parcial-valor-input" type="text" inputmode="decimal" value="0,00" autocomplete="off">
+            </div>
+            <label for="parcial-nome-input" style="margin-top:12px; display:block;">Nome de quem falta pagar</label>
+            <input class="text-input" id="parcial-nome-input" type="text" placeholder="Ex: João (cliente do prédio azul)">
+            <div class="hint" style="text-align:left;margin-top:8px;">O restante vira um pendente em "A receber", ligado a essa corrida.</div>
+          </div>
         </div>
       </div>
 
@@ -1316,6 +1338,17 @@ try{
   const valorBolsoManualField = document.getElementById('valor-bolso-manual-field');
   const valorBolsoManualInput = document.getElementById('valor-bolso-manual-input');
   const valorBolsoManualMask = attachMoneyMask(valorBolsoManualInput, ()=>{ updateBolso(); updateSaveState(); });
+  const parcialField = document.getElementById('parcial-field');
+  const parcialCheckbox = document.getElementById('parcial-checkbox');
+  const parcialDetalhes = document.getElementById('parcial-detalhes');
+  const parcialValorInput = document.getElementById('parcial-valor-input');
+  const parcialValorMask = attachMoneyMask(parcialValorInput, updateSaveState);
+  const parcialNomeInput = document.getElementById('parcial-nome-input');
+  parcialNomeInput.addEventListener('input', updateSaveState);
+  parcialCheckbox.addEventListener('change', function(){
+    parcialDetalhes.style.display = parcialCheckbox.checked ? 'block' : 'none';
+    updateSaveState();
+  });
   const bolsoBox = document.getElementById('bolso-box');
   const bolsoTaxaRow = document.getElementById('bolso-taxa-row');
   const bolsoTaxaVal = document.getElementById('bolso-taxa-val');
@@ -1394,6 +1427,13 @@ try{
     }
     nomePassageiroField.style.display = (val === 'A receber') ? 'block' : 'none';
     if(val !== 'A receber') nomePassageiroInput.value = '';
+    parcialField.style.display = (val && val !== 'A receber') ? 'block' : 'none';
+    if(!val || val === 'A receber'){
+      parcialCheckbox.checked = false;
+      parcialDetalhes.style.display = 'none';
+      parcialValorMask.reset();
+      parcialNomeInput.value = '';
+    }
     updateValorBolsoManualVisibility();
     updateSaveState();
   });
@@ -1474,7 +1514,9 @@ try{
     const nomeOk = selectedPagamento !== 'A receber' || nomePassageiroInput.value.trim().length > 0;
     const bolsoManualOk = !usaValorBolsoManual() || valorBolsoManualMask.get() > 0;
     const valorOk = valorMask.get() > 0;
-    saveCorridaBtn.disabled = !(valorOk && selectedPlataforma && selectedPagamento && cartaoOk && nomeOk && bolsoManualOk);
+    const parcialAtivo = parcialCheckbox && parcialCheckbox.checked;
+    const parcialOk = !parcialAtivo || (parcialNomeInput.value.trim().length > 0 && parcialValorMask.get() > 0 && parcialValorMask.get() < valorMask.get());
+    saveCorridaBtn.disabled = !(valorOk && selectedPlataforma && selectedPagamento && cartaoOk && nomeOk && bolsoManualOk && parcialOk);
 
     const hint = document.getElementById('save-corrida-hint');
     const started = valorOk || selectedPlataforma || selectedPagamento;
@@ -1497,6 +1539,9 @@ try{
       hint.style.display = 'block';
     } else if(!nomeOk){
       hint.textContent = 'Preenche o nome do passageiro pra salvar como "a receber"';
+      hint.style.display = 'block';
+    } else if(!parcialOk){
+      hint.textContent = 'Preenche o nome e um valor recebido menor que o total da corrida';
       hint.style.display = 'block';
     } else {
       hint.style.display = 'none';
@@ -1521,6 +1566,11 @@ try{
     nomePassageiroInput.value = '';
     valorBolsoManualField.style.display = 'none';
     bolsoBox.style.display = 'none';
+    parcialField.style.display = 'none';
+    parcialCheckbox.checked = false;
+    parcialDetalhes.style.display = 'none';
+    parcialValorMask.reset();
+    parcialNomeInput.value = '';
     obsInput.value = '';
     aplicarTemaPlataforma(null);
   }
@@ -1640,7 +1690,9 @@ try{
     const valor = valorMask.get();
     const cartaoOk = selectedPagamento !== 'Cartão' || !!selectedTipoCartao;
     const nomeOk = selectedPagamento !== 'A receber' || nomePassageiroInput.value.trim().length > 0;
-    if(!(valor > 0 && selectedPlataforma && selectedPagamento && cartaoOk && nomeOk)) return;
+    const parcialAtivo = selectedPagamento !== 'A receber' && parcialCheckbox.checked;
+    const parcialOk = !parcialAtivo || (parcialNomeInput.value.trim().length > 0 && parcialValorMask.get() > 0 && parcialValorMask.get() < valor);
+    if(!(valor > 0 && selectedPlataforma && selectedPagamento && cartaoOk && nomeOk && parcialOk)) return;
     saveCorridaBtn.disabled = true;
     saveCorridaBtn.textContent = 'Salvando…';
 
@@ -1730,6 +1782,9 @@ try{
 
     const taxaApp = taxaAppValorAtual(valor);
 
+    const valorRecebidoAgora = parcialAtivo ? parcialValorMask.get() : null;
+    const valorRestantePix = parcialAtivo ? (valor - valorRecebidoAgora) : null;
+
     if(editingCorridaId){
       const idx = corridas.findIndex(c => c.id === editingCorridaId);
       if(idx === -1){ saveCorridaBtn.disabled = false; return; }
@@ -1743,7 +1798,7 @@ try{
         tipoCartao: selectedPagamento === 'Cartão' ? selectedTipoCartao : null,
         taxaAplicada: selectedPagamento === 'Cartão' ? taxaAtual() : 0,
         taxaAppValor: taxaApp,
-        bolso: currentBolso(valor),
+        bolso: parcialAtivo ? valorRecebidoAgora : currentBolso(valor),
         observacao: obsInput.value.trim()
       };
       corridas[idx] = atualizada;
@@ -1751,6 +1806,26 @@ try{
       if(original.formaPagamento === 'A receber'){
         recebivelIdxRemovido = recebiveis.findIndex(r => r.corridaId === original.id && r.status === 'pendente');
         if(recebivelIdxRemovido !== -1) recebivelRemovido = recebiveis.splice(recebivelIdxRemovido, 1)[0];
+      }
+      let novoRecebivelParcial = null;
+      if(parcialAtivo){
+        novoRecebivelParcial = {
+          id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+          corridaId: original.id,
+          parcial: true,
+          dataCorrida: localDateStr(original.dataHora),
+          horaCorrida: original.dataHora,
+          plataforma: selectedPlataforma,
+          valor: valorRestantePix,
+          nomePassageiro: parcialNomeInput.value.trim(),
+          observacao: obsInput.value.trim(),
+          status: 'pendente',
+          dataPagamento: null,
+          formaPagamento: null,
+          tipoCartao: null,
+          bolso: null
+        };
+        recebiveis.push(novoRecebivelParcial);
       }
       const ok = await persistAll();
       saveCorridaBtn.textContent = 'Salvar alterações';
@@ -1763,6 +1838,7 @@ try{
       } else {
         corridas[idx] = original;
         if(recebivelRemovido) recebiveis.splice(recebivelIdxRemovido, 0, recebivelRemovido);
+        if(novoRecebivelParcial) recebiveis.pop();
         showToast('Não deu pra salvar, tenta de novo');
         saveCorridaBtn.disabled = false;
       }
@@ -1778,18 +1854,40 @@ try{
       tipoCartao: selectedPagamento === 'Cartão' ? selectedTipoCartao : null,
       taxaAplicada: selectedPagamento === 'Cartão' ? taxaAtual() : 0,
       taxaAppValor: taxaApp,
-      bolso: currentBolso(valor),
+      bolso: parcialAtivo ? valorRecebidoAgora : currentBolso(valor),
       observacao: obsInput.value.trim()
     };
     corridas.push(entry);
+    let recebivelParcialNovo = null;
+    if(parcialAtivo){
+      recebivelParcialNovo = {
+        id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+        corridaId: entry.id,
+        parcial: true,
+        dataCorrida: localDateStr(entry.dataHora),
+        horaCorrida: entry.dataHora,
+        plataforma: selectedPlataforma,
+        valor: valorRestantePix,
+        nomePassageiro: parcialNomeInput.value.trim(),
+        observacao: obsInput.value.trim(),
+        status: 'pendente',
+        dataPagamento: null,
+        formaPagamento: null,
+        tipoCartao: null,
+        bolso: null
+      };
+      recebiveis.push(recebivelParcialNovo);
+    }
     const ok = await persistAll();
     saveCorridaBtn.textContent = 'Salvar corrida';
     if(ok){
-      showToast('Corrida salva ✓');
+      showToast(parcialAtivo ? 'Corrida salva, parte ficou a receber ✓' : 'Corrida salva ✓');
       refreshTodayCount();
+      if(parcialAtivo) updateReceberBadge();
       abrirNovaCorrida();
     } else {
       corridas.pop();
+      if(recebivelParcialNovo) recebiveis.pop();
       showToast('Não deu pra salvar, tenta de novo');
       saveCorridaBtn.disabled = false;
     }
@@ -2089,20 +2187,35 @@ try{
       pendList.innerHTML = '<div class="receber-empty">Ninguém te devendo no momento 🎉</div>';
       document.getElementById('receber-total-pendente').style.display = 'none';
     } else {
-      pendList.innerHTML = pendentes.map(r => {
-        const nome = (r.nomePassageiro || '').trim();
-        const hora = r.horaCorrida ? dataFmtCurta(r.horaCorrida) : (r.dataCorrida ? dataFmtCurta(r.dataCorrida + 'T00:00:00') : '—');
-        return `
-        <div class="receber-item" data-id="${r.id}">
-          <div class="receber-item-icon">${nome.charAt(0).toUpperCase() || '?'}</div>
-          <div class="receber-item-info">
-            <div class="receber-item-name">${nome || 'Sem nome'}</div>
-            <div class="receber-item-meta">${hora} · ${labelPlataforma(r.plataforma || '')}</div>
+      const porNome = {};
+      pendentes.forEach(r => {
+        const nome = (r.nomePassageiro || '').trim() || 'Sem nome';
+        (porNome[nome] = porNome[nome] || []).push(r);
+      });
+      const nomesOrdenados = Object.keys(porNome).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
+      pendList.innerHTML = nomesOrdenados.map(nome => {
+        const itens = porNome[nome];
+        const subtotal = itens.reduce((s,r) => s + (r.valor || 0), 0);
+        const itensHtml = itens.map(r => {
+          const hora = r.horaCorrida ? dataFmtCurta(r.horaCorrida) : (r.dataCorrida ? dataFmtCurta(r.dataCorrida + 'T00:00:00') : '—');
+          return `
+          <div class="receber-item" data-id="${r.id}">
+            <div class="receber-item-icon">${nome.charAt(0).toUpperCase() || '?'}</div>
+            <div class="receber-item-info">
+              <div class="receber-item-name">${nome}</div>
+              <div class="receber-item-meta">${hora} · ${labelPlataforma(r.plataforma || '')}${r.parcial ? ' · parcial' : ''}</div>
+            </div>
+            <div class="receber-item-val">${fmt(r.valor || 0)}</div>
           </div>
-          <div class="receber-item-val">${fmt(r.valor || 0)}</div>
-        </div>
-      `;
+        `;
+        }).join('');
+        const grupoHeader = itens.length > 1
+          ? '<div class="receber-grupo-header"><span>' + nome + '</span><span>' + fmt(subtotal) + '</span></div>'
+          : '';
+        return grupoHeader + itensHtml;
       }).join('');
+
       const totalPendente = pendentes.reduce((s,r) => s + (r.valor || 0), 0);
       const totalBox = document.getElementById('receber-total-pendente');
       totalBox.style.display = 'flex';
@@ -2209,14 +2322,25 @@ try{
 
     if(idxCorridaLigada !== -1){
       corridaAnterior = corridas[idxCorridaLigada];
-      corridas[idxCorridaLigada] = {
-        ...corridaAnterior,
-        formaPagamento: selectedPagamentoRecebivel,
-        tipoCartao: r.tipoCartao,
-        taxaAplicada: taxa,
-        taxaAppValor: 0,
-        bolso: bolso
-      };
+      if(r.parcial){
+        // Já tinha uma parte recebida (ex: Pix na hora) com sua própria forma de
+        // pagamento — só soma o que chegou agora ao bolso, sem apagar o que já
+        // tinha sido registrado.
+        corridas[idxCorridaLigada] = {
+          ...corridaAnterior,
+          bolso: (corridaAnterior.bolso || 0) + bolso,
+          observacao: (corridaAnterior.observacao ? corridaAnterior.observacao + ' — ' : '') + 'Restante recebido em ' + selectedPagamentoRecebivel
+        };
+      } else {
+        corridas[idxCorridaLigada] = {
+          ...corridaAnterior,
+          formaPagamento: selectedPagamentoRecebivel,
+          tipoCartao: r.tipoCartao,
+          taxaAplicada: taxa,
+          taxaAppValor: 0,
+          bolso: bolso
+        };
+      }
     } else {
       // Recebível antigo, sem corrida vinculada — mantém o comportamento anterior
       corridaNova = {
