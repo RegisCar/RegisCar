@@ -2627,13 +2627,17 @@ try{
 
     const kHora = kmDiasMap[relatorioData] || {};
     html += '<div class="notebook-row" style="flex-direction:column; align-items:stretch; gap:8px; padding:10px 0;">';
-    html += '<span class="nb-main" style="font-weight:700;">Horário de trabalho (pra calcular R$/hora)</span>';
-    html += '<div style="display:flex; gap:10px; align-items:center;">';
-    html += '<input type="time" id="report-hora-inicio-input" class="text-input" style="flex:1;" value="' + (kHora.horaInicio || '') + '">';
-    html += '<span style="color:var(--text-dim);">até</span>';
-    html += '<input type="time" id="report-hora-fim-input" class="text-input" style="flex:1;" value="' + (kHora.horaFim || '') + '">';
+    html += '<span class="nb-main" style="font-weight:700;">Editar Km e horário desse dia</span>';
+    html += '<div style="display:flex; gap:10px;">';
+    html += '<div style="flex:1;"><label for="report-km-inicial-input" style="font-size:11px; color:var(--text-dim);">Km inicial</label><input type="text" inputmode="numeric" id="report-km-inicial-input" class="text-input" value="' + (kHora.inicial != null ? kHora.inicial : '') + '"></div>';
+    html += '<div style="flex:1;"><label for="report-km-final-input" style="font-size:11px; color:var(--text-dim);">Km final</label><input type="text" inputmode="numeric" id="report-km-final-input" class="text-input" value="' + (kHora.final != null ? kHora.final : '') + '"></div>';
+    html += '<div style="flex:1;"><label for="report-km-desconto-input" style="font-size:11px; color:var(--text-dim);">Km fora</label><input type="text" inputmode="numeric" id="report-km-desconto-input" class="text-input" value="' + (kHora.desconto ? kHora.desconto : '') + '"></div>';
     html += '</div>';
-    html += '<button class="export-btn" id="report-salvar-hora-btn" style="padding:9px;">Salvar horário desse dia</button>';
+    html += '<div style="display:flex; gap:10px; align-items:flex-end;">';
+    html += '<div style="flex:1;"><label for="report-hora-inicio-input" style="font-size:11px; color:var(--text-dim);">Início</label><input type="time" id="report-hora-inicio-input" class="text-input" value="' + (kHora.horaInicio || '') + '"></div>';
+    html += '<div style="flex:1;"><label for="report-hora-fim-input" style="font-size:11px; color:var(--text-dim);">Fim</label><input type="time" id="report-hora-fim-input" class="text-input" value="' + (kHora.horaFim || '') + '"></div>';
+    html += '</div>';
+    html += '<button class="export-btn" id="report-salvar-hora-btn" style="padding:9px;">Salvar Km e horário desse dia</button>';
     html += '</div>';
 
     html += '<div class="notebook-section-title">Corridas</div>';
@@ -2703,20 +2707,33 @@ try{
     if(btnSalvarHora){
       btnSalvarHora.addEventListener('click', async function(){
         const dataAlvo = relatorioData;
+        const num = id => { const v = document.getElementById(id).value.replace(/\D/g,''); return v === '' ? null : parseInt(v, 10); };
+        const kmIni = num('report-km-inicial-input');
+        const kmFim = num('report-km-final-input');
+        const kmDesc = num('report-km-desconto-input') || 0;
         const hi = document.getElementById('report-hora-inicio-input').value;
         const hf = document.getElementById('report-hora-fim-input').value;
+        if(kmIni != null && kmFim != null && kmFim < kmIni){
+          showToast('Km final não pode ser menor que o inicial');
+          return;
+        }
         btnSalvarHora.disabled = true;
         btnSalvarHora.textContent = 'Salvando…';
         const anterior = kmDiasMap[dataAlvo] ? {...kmDiasMap[dataAlvo]} : null;
-        kmDiasMap[dataAlvo] = Object.assign({inicial:null, final:null, desconto:0}, kmDiasMap[dataAlvo] || {}, {
+        kmDiasMap[dataAlvo] = Object.assign({}, kmDiasMap[dataAlvo] || {}, {
+          inicial: kmIni,
+          final: kmFim,
+          desconto: kmDesc,
           horaInicio: hi || null,
           horaFim: hf || null
         });
         const ok = await persistAll();
         btnSalvarHora.disabled = false;
-        btnSalvarHora.textContent = 'Salvar horário desse dia';
+        btnSalvarHora.textContent = 'Salvar Km e horário desse dia';
         if(ok){
-          showToast('Horário salvo ✓');
+          montarKmDia();
+          showToast('Km e horário salvos ✓');
+          renderReports();
         } else {
           if(anterior) kmDiasMap[dataAlvo] = anterior; else delete kmDiasMap[dataAlvo];
           showToast('Não deu pra salvar, tenta de novo');
